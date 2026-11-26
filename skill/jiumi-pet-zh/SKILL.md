@@ -18,3 +18,5 @@ description: 使用预设或自带 PNG 在本机制作桌宠，离线预览、�
 从社区安装到已有桌宠时，通过远程 MCP 的 get_community_module 获取详情页指定 ID 和版本。检查原角色并沿用已有动作，将完整 JSON 交给本地 install_pet_module，或运行 `python3 pet.py install-module UUID module.json --module-id ID --version N`。缺少角色动作时用 `--clips clips.json` 提供动作名到帧序列的映射，导出后从菜单离线试玩。
 
 macOS v1 宿主统一提供右键互动、菜单栏管理、窗口偏好和可录入的全局显隐快捷键。重建原角色时保留 UUID，以沿用设备上的设置。
+
+在桌宠设置中可开启鼠标穿透，从菜单栏爪印可直接关闭。默认避开 macOS 原生全屏空间，退出全屏后恢复；手动隐藏会一直保持到主动召回。

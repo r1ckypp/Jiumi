@@ -189,7 +189,7 @@ panel.backgroundColor = .clear
 panel.hasShadow=false
 panel.level = .floating
 panel.hidesOnDeactivate=false
-panel.collectionBehavior=[.canJoinAllSpaces,.fullScreenAuxiliary]
+panel.collectionBehavior=[.canJoinAllSpaces,.fullScreenNone]
 panel.title="啾咪桌宠"
 let config=WKWebViewConfiguration()
 let bridge=DragBridge()
@@ -231,9 +231,12 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
     let shortcutField = NSTextField()
     let feedback = NSTextField(wrappingLabelWithString:"")
     let remember = NSButton(checkboxWithTitle:"记住桌宠位置",target:nil,action:nil)
+    let passThrough = NSButton(checkboxWithTitle:"鼠标穿透",target:nil,action:nil)
+    let avoidFullscreen = NSButton(checkboxWithTitle:"全屏时避让",target:nil,action:nil)
+    let passCommand = NSMenuItem()
     var restoreControls: (() -> Void)?
     let name = Bundle.main.object(forInfoDictionaryKey:"CFBundleName") as? String ?? "桌宠"
-    let settings = SettingsPanel(contentRect: NSRect(x:0,y:0,width:390,height:365),
+    let settings = SettingsPanel(contentRect: NSRect(x:0,y:0,width:390,height:410),
                            styleMask:[.titled,.closable], backing:.buffered, defer:false)
     let defaults: UserDefaults
 
@@ -255,6 +258,9 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             menu.addItem(.separator())
             menu.addItem(withTitle:"退出"+name,action:#selector(NSApplication.terminate(_:)),keyEquivalent:"").target = NSApp
         }
+        passCommand.target = self
+        passCommand.action = #selector(togglePassThrough)
+        commands.insertItem(passCommand,at:2)
         item.menu = commands
         stage.petMenu = context
         settings.title = name + " · 桌宠设置"
@@ -272,6 +278,16 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             place(control,100,y,250,24)
             return control
         }
+        passThrough.state = defaults.bool(forKey:"passThrough") ? .on : .off
+        passThrough.target = self
+        passThrough.action = #selector(applyPassThrough)
+        applyPassThrough()
+        place(passThrough,20,367,165,25)
+        avoidFullscreen.state = defaults.object(forKey:"avoidFullscreen") as? Bool == false ? .off : .on
+        avoidFullscreen.target = self
+        avoidFullscreen.action = #selector(applyFullscreenPolicy)
+        applyFullscreenPolicy()
+        place(avoidFullscreen,195,367,175,25)
         let size = slider("角色大小","size",1,0.65,1.75,318,#selector(setSize(_:)))
         setSize(size)
         let opacity = slider("不透明度","opacity",1,0.35,1,282,#selector(setOpacity(_:)))
@@ -309,6 +325,10 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             floating.state = .on
             nameToggle.state = .off
             self.remember.state = .on
+            self.passThrough.state = .off
+            self.applyPassThrough()
+            self.avoidFullscreen.state = .on
+            self.applyFullscreenPolicy()
             self.setSize(size)
             self.setOpacity(opacity)
             self.setFloating(floating)
@@ -434,6 +454,21 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
         petPanel.setContentSize(NSSize(width:170*zoom,height:frame.height/frame.width*170*zoom))
         defaults.set(zoom,forKey:"size")
         ensureOnScreen()
+    }
+    @objc func applyPassThrough() {
+        let enabled = passThrough.state == .on
+        petPanel.ignoresMouseEvents = enabled
+        passCommand.title = enabled ? "关闭鼠标穿透" : "开启鼠标穿透"
+        defaults.set(enabled,forKey:"passThrough")
+    }
+    @objc func togglePassThrough() {
+        passThrough.state = passThrough.state == .on ? .off : .on
+        applyPassThrough()
+    }
+    @objc func applyFullscreenPolicy() {
+        let enabled = avoidFullscreen.state == .on
+        petPanel.collectionBehavior = [.canJoinAllSpaces, enabled ? .fullScreenNone : .fullScreenAuxiliary]
+        defaults.set(enabled,forKey:"avoidFullscreen")
     }
     func menuNeedsUpdate(_ menu:NSMenu) {
         menu.items.first(where: {$0.action == #selector(togglePet)})?.title = (petPanel.isVisible ? "隐藏" : "显示") + name

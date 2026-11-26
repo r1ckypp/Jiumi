@@ -16,3 +16,5 @@ For local import, launch, plugins or event hooks, consult [local workflows](refe
 For a community installation on an existing pet, use the fixed ID and version from the detail page with remote MCP get_community_module. Inspect the existing character and preserve its motions. Pass the downloaded JSON to local install_pet_module or run `python3 pet.py install-module UUID module.json --module-id ID --version N`. Supply missing character clips through `--clips clips.json` (a map of motion IDs to frame sequences). Export and try the command offline.
 
 The macOS v1 host includes an interaction-first context menu, a management menu in the menu bar, window preferences and an optional per-pet global visibility shortcut. Keep the pet UUID when rebuilding to retain its device settings.
+
+Enable mouse pass-through in desktop settings and turn it off from the paw menu. By default the pet stays out of native full-screen Spaces and returns when leaving them unless manually hidden.
