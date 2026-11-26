@@ -9,8 +9,9 @@ function validateNotice(m){
 }
 
 function attachSessionNotices(stage,pet,host){
-  const rules=(pet.modules??[]).filter(m=>m.kind==='session-notice' && pet.plugins.includes(m.id));
-  if(!rules.length)return;
+  const installed=(pet.modules??[]).filter(m=>m.kind==='session-notice');
+  if(!installed.length)return;
+  let rules=installed.filter(m=>pet.plugins.includes(m.id));
   const panel=document.createElement('aside');
   panel.setAttribute('aria-live','polite');
   panel.style.cssText='position:relative;box-sizing:border-box;margin:2px auto;width:min(100%,220px);max-height:110px;overflow:auto;border-radius:10px;background:#fff8e8;color:#49372d;padding:6px;font:13px/1.3 system-ui;text-align:center;overflow-wrap:anywhere';
@@ -70,6 +71,11 @@ function attachSessionNotices(stage,pet,host){
     }
     if(changed)render();
     return true;
+  };
+  feedback.syncNotices=()=>{
+    rules=installed.filter(m=>pet.plugins.includes(m.id));
+    for(const [key,item] of notices)if(!rules.includes(item.rule))notices.delete(key);
+    render();
   };
   feedback.disconnect=source=>{
     disconnect(source);

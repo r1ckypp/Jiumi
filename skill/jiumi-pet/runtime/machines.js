@@ -40,7 +40,8 @@ function validateMachine(m){
 }
 
 function interactionMachine(modules,render){
-  const ordered=[...modules].sort((a,b)=>b.priority-a.priority || (a.id<b.id?-1:1));
+  const sort=list=>[...list].sort((a,b)=>b.priority-a.priority || (a.id<b.id?-1:1));
+  let ordered=sort(modules);
   const paused=[];
   let current=null;
   const route=(map,event)=>map && Object.hasOwn(map,event)?map[event]:undefined;
@@ -70,7 +71,12 @@ function interactionMachine(modules,render){
     }
     move(owner,owner.enter[event]);
   }
-  return {dispatch,move,clear(){paused.length=0;current=null;}};
+  function replace(list){
+    ordered=sort(list);
+    for(let i=paused.length-1;i>=0;i--)if(!ordered.includes(paused[i].module))paused.splice(i,1);
+    if(current && !ordered.includes(current.module))move(current.module,'$resume');
+  }
+  return {dispatch,move,replace,clear(){paused.length=0;current=null;}};
 }
 
 function petMachines(pet){

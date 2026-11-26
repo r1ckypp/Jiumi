@@ -18,3 +18,5 @@ For a community installation on an existing pet, use the fixed ID and version fr
 The macOS v1 host includes an interaction-first context menu, a management menu in the menu bar, window preferences and an optional per-pet global visibility shortcut. Keep the pet UUID when rebuilding to retain its device settings.
 
 Enable mouse pass-through in desktop settings and turn it off from the paw menu. By default the pet stays out of native full-screen Spaces and returns when leaving them unless manually hidden.
+
+In Desktop Settings, macOS 13+ app bundles can opt into Open at Login. Plugins & Interaction Menu shows installed versions, enables and disables plugins live, and edits the order, visibility and names of interaction commands. Export the character package to carry the enabled selection.

@@ -225,6 +225,7 @@ def window_page(pid):
     payload=json.dumps([pet,rules]).replace("<","\\u003c")
     html="""<!doctype html><meta charset=utf-8><style>*{box-sizing:border-box}body{margin:0;background:transparent;text-align:center;font:13px system-ui}button{width:145px;height:140px;background:transparent;border:0;position:relative;cursor:pointer}footer{display:inline-block;background:#fff8e8;color:#47392c;border-radius:10px;padding:2px 10px;user-select:none}footer[hidden]{display:none}body{position:absolute;bottom:0;width:100%;height:170px}body>aside{position:absolute!important;bottom:100%;width:100%!important}</style><button id="stage" title="轻点抚摸，长按拖动"></button><br><footer id="label" hidden></footer><script>"""
     html+=player_source([pet["rig"]["kind"]] if pet.get("rig") else [])+"\nconst [pet,rules]="+payload+";"
+    html+="for(const m of [...(pet.modules||[]),...rules]){const flag=window.petPluginOverrides?.[m.id];if(typeof flag==='boolean'){pet.plugins=pet.plugins.filter(id=>id!==m.id);if(flag)pet.plugins.push(m.id)}}"
     html+="const channel=window.webkit?.messageHandlers?.petSession;const host=channel?{nativeMenu:true,session:(method,target)=>channel.postMessage({method,...target}),layout:show=>channel.postMessage({method:'layout',visible:show?'yes':'no'})}:undefined;mountPet(stage,pet,rules,host);label.textContent=pet.name;stage.addEventListener('pet.tap',e=>label.textContent=pet.name+' · '+e.detail.count);</script>"
     page=base/"preview.html"
     write(page,html)

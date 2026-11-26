@@ -49,7 +49,8 @@ function createFeedback({body, effect, stateChanged=()=>{}, interactionChanged=(
   const priority={affection:3,attention:2,celebrate:1};
   let interaction='free';
   let state='idle',active=null,version=0,visible=true,disposed=false;
-  const reactions=[...defaults.filter(d=>!rules.some(r=>r.on===d.on && Object.hasOwn(priority,r.intent))),...rules];
+  const combine=list=>[...defaults.filter(d=>!list.some(r=>r.on===d.on && Object.hasOwn(priority,r.intent))),...list];
+  let reactions=combine(rules);
   function base(){
     if(visible && !disposed && !active && interaction==='free')body(state,null);
   }
@@ -119,7 +120,7 @@ function createFeedback({body, effect, stateChanged=()=>{}, interactionChanged=(
     update();
   }
   base();
-  return {dispatch,play,setVisible,disconnect,tick:()=>expire(clock()),getState:()=>state,getInteraction:()=>interaction,getBodyIntent:()=>interactionMotion??state,
+  return {configure(list,rules){reactions=combine(rules);machine.replace(list);},dispatch,play,setVisible,disconnect,tick:()=>expire(clock()),getState:()=>state,getInteraction:()=>interaction,getBodyIntent:()=>interactionMotion??state,
     dispose(){disposed=true;++version;sessions.clear();seen.clear();body('silent',null)}};
 }
 
@@ -299,14 +300,17 @@ function petHands(button,feedback){
     dispose(){finish();clearTimeout(handTimer);listeners.abort();hand.remove();}
   };
 }
-function attachPetMenu(stage,pet,nativeMenu){
-  const items=petMachines(pet).flatMap(module=>Object.entries(module.menu??{}).map(([key,label])=>({
+function petMenuItems(pet){
+  return petMachines(pet).flatMap(module=>Object.entries(module.menu??{}).map(([key,label])=>({
     event:'menu.'+module.id+'.'+key, label:ui(label)
   })));
+}
+function attachPetMenu(stage,pet,nativeMenu){
+  const items=petMenuItems(pet);
   const feedback=stage.feedback;
   feedback.menuItems=items;
   feedback.selectMenu=event=>{
-    if(!items.some(item=>item.event===event))return false;
+    if(!feedback.menuItems.some(item=>item.event===event))return false;
     return feedback.dispatch({v:1,id:crypto.randomUUID(),source:'menu',type:event,at:Date.now()});
   };
   if(nativeMenu || !items.length)return;
@@ -354,13 +358,14 @@ function mountPet(button, pet, catalog, host) {
       if(accepted && !event.type.startsWith('host.'))modules.send(event.type);
       return accepted;
     };
+    motion.syncWorkers=modules.sync;
     motion.dispose=()=>{modules.dispose();dispose();};
     let moduleVisible=true;
     motion.setVisible=value=>{
       if(value===moduleVisible)return;
       moduleVisible=value;
       setVisible(value);
-      modules.send(value?'host.resume':'host.hide');
+      modules.setVisible(value);
     };
   }
   button.feedback=motion;
@@ -377,6 +382,16 @@ function mountPet(button, pet, catalog, host) {
   };
   attachSessionNotices(button,pet,host);
   attachPetMenu(button,pet,host?.nativeMenu);
+  if(host?.nativeMenu)motion.setPlugin=(id,enabled)=>{
+    if(![...catalog,...(pet.modules??[])].some(m=>m.id===id))return false;
+    pet.plugins=pet.plugins.filter(key=>key!==id);
+    if(enabled)pet.plugins.push(id);
+    motion.configure(petMachines(pet),catalog.filter(m=>pet.plugins.includes(m.id)));
+    motion.syncWorkers?.();
+    motion.syncNotices?.();
+    motion.menuItems=petMenuItems(pet);
+    return true;
+  };
   return motion;
 }
 

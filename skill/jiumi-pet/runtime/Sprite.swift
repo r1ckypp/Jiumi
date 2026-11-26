@@ -1,4 +1,5 @@
 import AppKit
+import ServiceManagement
 import WebKit
 import CryptoKit
 import Carbon.HIToolbox
@@ -198,6 +199,12 @@ config.userContentController.add(bridge,name:"petGrab")
 config.userContentController.add(ProgressBridge(),name:"progress")
 let petIdentity = bundled == nil ? file.deletingLastPathComponent().lastPathComponent : Bundle.main.bundleIdentifier?.components(separatedBy:".").last ?? ""
 config.userContentController.addScriptMessageHandler(SessionBridge(panel:panel,identity:petIdentity), contentWorld:.page, name:"petSession")
+let preferenceID=bundled == nil ? petIdentity : Bundle.main.bundleIdentifier ?? "local"
+let startupPreferences=UserDefaults(suiteName:"studio.jiumi.window." + preferenceID)
+if let overrides=startupPreferences?.dictionary(forKey:"pluginOverrides") as? [String:Bool],
+   let data=try? JSONEncoder().encode(overrides), let json=String(data:data,encoding:.utf8) {
+    config.userContentController.addUserScript(WKUserScript(source:"window.petPluginOverrides="+json,injectionTime:.atDocumentStart,forMainFrameOnly:true))
+}
 let view=Stage(frame:panel.contentView!.bounds,configuration:config)
 view.setValue(false, forKey:"drawsBackground")
 panel.contentView=view
@@ -233,10 +240,25 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
     let remember = NSButton(checkboxWithTitle:"记住桌宠位置",target:nil,action:nil)
     let passThrough = NSButton(checkboxWithTitle:"鼠标穿透",target:nil,action:nil)
     let avoidFullscreen = NSButton(checkboxWithTitle:"全屏时避让",target:nil,action:nil)
+    let loginItem = NSButton(checkboxWithTitle:"登录时启动",target:nil,action:nil)
+    let manager = NSPanel(contentRect:NSRect(x:0,y:0,width:400,height:220),
+                          styleMask:[.titled,.closable],backing:.buffered,defer:false)
+    let pluginChoice = NSPopUpButton()
+    let pluginSwitch = NSButton(checkboxWithTitle:"启用插件",target:nil,action:nil)
+    let actionChoice = NSPopUpButton()
+    let actionShown = NSButton(checkboxWithTitle:"显示在菜单中",target:nil,action:nil)
+    let alias = NSTextField()
+    let moveUp = NSButton(title:"上移",target:nil,action:nil)
+    let moveDown = NSButton(title:"下移",target:nil,action:nil)
+    var sleeping=false
+    var pluginRows = [[String:Any]]()
+    var actionRows = [[String:String]]()
+    var commandGroup:NSMenuItem?
+    var insertedItems = [NSMenuItem]()
     let passCommand = NSMenuItem()
     var restoreControls: (() -> Void)?
     let name = Bundle.main.object(forInfoDictionaryKey:"CFBundleName") as? String ?? "桌宠"
-    let settings = SettingsPanel(contentRect: NSRect(x:0,y:0,width:390,height:410),
+    let settings = SettingsPanel(contentRect: NSRect(x:0,y:0,width:390,height:457),
                            styleMask:[.titled,.closable], backing:.buffered, defer:false)
     let defaults: UserDefaults
 
@@ -278,6 +300,12 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             place(control,100,y,250,24)
             return control
         }
+        loginItem.target=self; loginItem.action = #selector(changeLoginItem)
+        refreshLoginItem()
+        place(loginItem,20,415,170,26)
+        let manage=NSButton(title:"插件与互动菜单…",target:self,action:#selector(openManager))
+        place(manage,195,413,178,30)
+        configureManager()
         passThrough.state = defaults.bool(forKey:"passThrough") ? .on : .off
         passThrough.target = self
         passThrough.action = #selector(applyPassThrough)
@@ -343,25 +371,193 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             shortcutField.stringValue = saved
             applyKey()
         }
+        let workspaceEvents=NSWorkspace.shared.notificationCenter
+        workspaceEvents.addObserver(self,selector:#selector(willSleep),name:NSWorkspace.willSleepNotification,object:nil)
+        workspaceEvents.addObserver(self,selector:#selector(didWake),name:NSWorkspace.didWakeNotification,object:nil)
         settings.center()
     }
-    func loadPluginMenu() {
-        stage.evaluateJavaScript("document.getElementById('stage').feedback.menuItems") { result, _ in
-            guard let items = result as? [[String:String]] else { return }
-            guard !items.isEmpty else { return }
-            let group = NSMenuItem(title:"互动",action:nil,keyEquivalent:"")
-            group.submenu = self.interactions
-            self.commands.insertItem(group,at:2)
-            self.context.insertItem(.separator(),at:0)
-            for (index,entry) in items.enumerated() {
-                guard let label = entry["label"], let event = entry["event"] else { continue }
-                let item = NSMenuItem(title:label,action:#selector(self.selectPluginItem(_:)),keyEquivalent:"")
-                item.target = self
-                item.representedObject = event
-                self.context.insertItem(item,at:index)
-                self.interactions.addItem(item.copy() as! NSMenuItem)
+    func refreshLoginItem() {
+        loginItem.isEnabled = false
+        loginItem.state = .off
+        if #available(macOS 13.0,*), bundled != nil {
+            loginItem.isEnabled = true
+            switch SMAppService.mainApp.status {
+            case .enabled: loginItem.state = .on
+            case .requiresApproval: loginItem.state = .mixed
+            default: break
             }
         }
+        loginItem.toolTip = loginItem.isEnabled ? nil : "需要 macOS 13 或更高版本的独立应用。"
+    }
+    @objc func changeLoginItem() {
+        guard #available(macOS 13.0,*), bundled != nil else { return }
+        let service = SMAppService.mainApp
+        do {
+            switch service.status {
+            case .requiresApproval:
+                let alert=NSAlert()
+                alert.messageText="此登录项等待系统批准"
+                alert.addButton(withTitle:"打开系统设置")
+                alert.addButton(withTitle:"取消登录项")
+                alert.addButton(withTitle:"返回")
+                switch alert.runModal() {
+                case .alertFirstButtonReturn: SMAppService.openSystemSettingsLoginItems()
+                case .alertSecondButtonReturn: try service.unregister()
+                default: break
+                }
+            case .enabled: try service.unregister()
+            default: try service.register()
+            }
+            feedback.stringValue = service.status == .requiresApproval ? "请在系统设置的登录项中允许此应用。" : ""
+        } catch {
+            feedback.stringValue = "登录项设置失败：" + error.localizedDescription
+        }
+        refreshLoginItem()
+    }
+    func configureManager() {
+        manager.title = name + " · 插件与互动菜单"
+        manager.isReleasedWhenClosed = false
+        func place(_ v:NSView,_ x:Int,_ y:Int,_ w:Int,_ h:Int) {
+            v.frame = NSRect(x:x,y:y,width:w,height:h)
+            manager.contentView?.addSubview(v)
+        }
+        pluginChoice.target=self; pluginChoice.action = #selector(selectPlugin)
+        pluginSwitch.target=self; pluginSwitch.action = #selector(changePlugin)
+        actionChoice.target=self; actionChoice.action = #selector(selectAction)
+        actionShown.target=self; actionShown.action = #selector(changeAction)
+        alias.setAccessibilityLabel("菜单名称")
+        alias.placeholderString = "使用原名称"
+        alias.target=self; alias.action = #selector(changeAction)
+        moveUp.target=self; moveUp.action = #selector(moveAction(_:))
+        moveDown.target=self; moveDown.action = #selector(moveAction(_:))
+        place(pluginChoice,16,168,245,30); place(pluginSwitch,268,168,120,30)
+        place(NSTextField(labelWithString:"已启用插件的互动菜单"),20,132,320,22)
+        place(actionChoice,16,95,245,30); place(actionShown,268,95,125,30)
+        place(NSTextField(labelWithString:"菜单名称"),20,59,70,22)
+        place(alias,95,58,170,24)
+        let save=NSButton(title:"应用名称",target:self,action:#selector(changeAction))
+        place(save,270,55,110,30)
+        place(moveUp,16,12,86,32); place(moveDown,105,12,86,32)
+        place(NSButton(title:"恢复默认菜单",target:self,action:#selector(resetMenu)),230,12,149,32)
+        manager.center()
+    }
+    @objc func resetMenu() {
+        for key in ["actionLabels","hiddenActions","actionOrder"] { defaults.removeObject(forKey:key) }
+        renderMenus()
+    }
+    @objc func openManager() {
+        manager.makeKeyAndOrderFront(nil)
+        loadPluginMenu()
+    }
+    func loadPluginMenu() {
+        let script = """
+        ({plugins:[...(pet.modules || []),...rules].map(m=>({id:m.id,name:m.name,version:m.version,enabled:pet.plugins.includes(m.id)})),
+          actions:stage.feedback.menuItems})
+        """
+        stage.evaluateJavaScript(script) { result,_ in
+            guard let data=result as? [String:Any], let plugins=data["plugins"] as? [[String:Any]],
+                  let actions=data["actions"] as? [[String:String]] else { return }
+            self.pluginRows=plugins
+            self.actionRows=actions
+            self.renderMenus()
+        }
+    }
+    func renderMenus() {
+        let order=defaults.stringArray(forKey:"actionOrder") ?? []
+        let hidden=defaults.stringArray(forKey:"hiddenActions") ?? []
+        let labels=defaults.dictionary(forKey:"actionLabels") as? [String:String] ?? [:]
+        let previousPlugin=pluginChoice.selectedItem?.representedObject as? String
+        let previousAction=actionChoice.selectedItem?.representedObject as? String
+        let ordered=order.compactMap { id in actionRows.first { $0["event"]==id } }
+            + actionRows.filter { !order.contains($0["event"] ?? "") }
+        actionRows=ordered
+        pluginChoice.removeAllItems()
+        for plugin in pluginRows {
+            guard let id=plugin["id"] as? String, let title=plugin["name"] as? String else { continue }
+            let item=NSMenuItem(title:title+" · v"+String(plugin["version"] as? Int ?? 1),action:nil,keyEquivalent:"")
+            item.representedObject=id
+            pluginChoice.menu?.addItem(item)
+            if previousPlugin==id { pluginChoice.select(item) }
+        }
+        if pluginRows.isEmpty { pluginChoice.addItem(withTitle:"尚未安装插件") }
+        selectPlugin()
+        for item in insertedItems { context.removeItem(item) }
+        insertedItems.removeAll()
+        if let group=commandGroup { commands.removeItem(group); commandGroup=nil }
+        interactions.removeAllItems()
+        actionChoice.removeAllItems()
+        for action in ordered {
+            guard let id=action["event"],let title=action["label"] else { continue }
+            let label=labels[id] ?? title
+            let choice=NSMenuItem(title:label,action:nil,keyEquivalent:"")
+            choice.representedObject=id
+            actionChoice.menu?.addItem(choice)
+            if previousAction==id { actionChoice.select(choice) }
+            if hidden.contains(id) { continue }
+            let item=NSMenuItem(title:label,action:#selector(selectPluginItem(_:)),keyEquivalent:"")
+            item.target=self; item.representedObject=id
+            context.insertItem(item,at:insertedItems.count)
+            insertedItems.append(item)
+            interactions.addItem(item.copy() as! NSMenuItem)
+        }
+        if !insertedItems.isEmpty {
+            let separator=NSMenuItem.separator()
+            context.insertItem(separator,at:insertedItems.count)
+            insertedItems.append(separator)
+            let group=NSMenuItem(title:"互动",action:nil,keyEquivalent:"")
+            group.submenu=interactions
+            commands.insertItem(group,at:2)
+            commandGroup=group
+        }
+        if ordered.isEmpty { actionChoice.addItem(withTitle:"暂无互动菜单项") }
+        selectAction()
+    }
+    @objc func selectPlugin() {
+        let id=pluginChoice.selectedItem?.representedObject as? String
+        pluginSwitch.isEnabled=id != nil
+        let current=pluginRows.first { $0["id"] as? String==id }
+        pluginSwitch.state=current?["enabled"] as? Bool == true ? .on : .off
+    }
+    @objc func changePlugin() {
+        guard let id=pluginChoice.selectedItem?.representedObject as? String else { return }
+        let enabled=pluginSwitch.state == .on
+        pluginSwitch.isEnabled=false
+        stage.callAsyncJavaScript("return stage.feedback.setPlugin(id,enabled)",arguments:["id":id,"enabled":enabled],in:nil,in:.page) { result in
+            if case .success(let response)=result, response as? Bool == true {
+                var overrides=self.defaults.dictionary(forKey:"pluginOverrides") ?? [:]
+                overrides[id]=enabled
+                self.defaults.set(overrides,forKey:"pluginOverrides")
+            }
+            self.loadPluginMenu()
+        }
+    }
+    @objc func selectAction() {
+        let id=actionChoice.selectedItem?.representedObject as? String
+        let index=actionChoice.indexOfSelectedItem
+        alias.isEnabled=id != nil; actionShown.isEnabled=id != nil
+        moveUp.isEnabled=id != nil && index>0
+        moveDown.isEnabled=id != nil && index+1<actionRows.count
+        alias.stringValue=id.flatMap { defaults.dictionary(forKey:"actionLabels")?[$0] as? String } ?? ""
+        actionShown.state=id.map { !(defaults.stringArray(forKey:"hiddenActions") ?? []).contains($0) } == true ? .on : .off
+    }
+    @objc func changeAction() {
+        guard let id=actionChoice.selectedItem?.representedObject as? String else { return }
+        var labels=defaults.dictionary(forKey:"actionLabels") as? [String:String] ?? [:]
+        let title=String(alias.stringValue.trimmingCharacters(in:.whitespacesAndNewlines).prefix(80))
+        labels[id]=title.isEmpty ? nil : title
+        defaults.set(labels,forKey:"actionLabels")
+        var hidden=Set(defaults.stringArray(forKey:"hiddenActions") ?? [])
+        if actionShown.state == .on { hidden.remove(id) } else { hidden.insert(id) }
+        defaults.set(Array(hidden),forKey:"hiddenActions")
+        renderMenus()
+    }
+    @objc func moveAction(_ sender:NSButton) {
+        let index=actionChoice.indexOfSelectedItem
+        let next=index+(sender === moveUp ? -1 : 1)
+        guard actionRows.indices.contains(index),actionRows.indices.contains(next) else { return }
+        actionRows.swapAt(index,next)
+        defaults.set(actionRows.compactMap { $0["event"] },forKey:"actionOrder")
+        renderMenus()
     }
     @objc func selectPluginItem(_ sender:NSMenuItem) {
         guard let event = sender.representedObject as? String else { return }
@@ -473,13 +669,25 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
     func menuNeedsUpdate(_ menu:NSMenu) {
         menu.items.first(where: {$0.action == #selector(togglePet)})?.title = (petPanel.isVisible ? "隐藏" : "显示") + name
     }
+    @objc func willSleep() {
+        sleeping=true
+        syncPlayerVisibility()
+    }
+    @objc func didWake() {
+        sleeping=false
+        syncPlayerVisibility()
+    }
+    func syncPlayerVisibility() {
+        stage.callAsyncJavaScript("document.getElementById('stage').feedback?.setVisible(visible)",
+                                  arguments:["visible":petPanel.isVisible && !sleeping],in:nil,in:.page,completionHandler:nil)
+    }
     func showPet(_ visible:Bool) {
         if visible { petPanel.orderFrontRegardless() } else { petPanel.orderOut(nil) }
-        stage.callAsyncJavaScript("document.getElementById('stage').feedback?.setVisible(visible)",
-                                  arguments:["visible":visible],in:nil,in:.page,completionHandler:nil)
+        syncPlayerVisibility()
     }
     @objc func togglePet() { showPet(!petPanel.isVisible) }
     @objc func showSettings() {
+        refreshLoginItem()
         NSApp.activate(ignoringOtherApps:true)
         settings.makeKeyAndOrderFront(nil)
     }
@@ -493,7 +701,7 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
         return true
     }
 }
-let controls = PetControls(panel:panel,stage:view,identity:bundled == nil ? file.deletingLastPathComponent().lastPathComponent : Bundle.main.bundleIdentifier ?? "local")
+let controls = PetControls(panel:panel,stage:view,identity:preferenceID)
 app.delegate = controls
 let events = PetEvents()
 events.onReady = { controls.applyNameVisibility(); controls.loadPluginMenu() }

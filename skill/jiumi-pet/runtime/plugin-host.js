@@ -160,11 +160,19 @@ function startPetModules(button,pet,feedback){
     boot();send('host.ready');
     return {send,close:stop};
   }
-  for(const module of (pet.modules||[]).slice(0,8)){
-    if(module.kind!=='state-machine' && module.kind!=='session-notice' && pet.plugins.includes(module.id)&&!active.has(module.id))active.set(module.id,start(module));
+  let tick=null,visible=!document.hidden;
+  function sync(){
+    for(const [id,runner] of active)if(!pet.plugins.includes(id)){
+      runner.close();active.delete(id);
+    }
+    for(const module of (pet.modules||[]).slice(0,8)){
+      if(module.kind!=='state-machine' && module.kind!=='session-notice' && pet.plugins.includes(module.id)&&!active.has(module.id))active.set(module.id,start(module));
+    }
+    if(active.size && !tick)tick=setInterval(()=>{if(!button.isConnected){dispose();return;}if(visible && !document.hidden)send('host.tick')},1000);
+    if(!active.size){clearInterval(tick);tick=null;}
   }
   function send(type){for(const runner of active.values())runner.send(type);}
-  const tick=active.size?setInterval(()=>{if(!button.isConnected){dispose();return;}if(!document.hidden)send('host.tick')},1000):null;
   function dispose(){clearInterval(tick);for(const runner of active.values())runner.close();active.clear();}
-  return {send,dispose};
+  sync();
+  return {send,dispose,sync,setVisible(value){visible=value;send(value?'host.resume':'host.hide');}};
 }
