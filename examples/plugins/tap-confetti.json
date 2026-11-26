@@ -1,0 +1,1 @@
+{"id":"tap-confetti","version":1,"name":"桃花雨","description":"摸摸宠物时，落下几片桃花。","on":"pet.tap","effect":"particles","symbol":"🌸"}

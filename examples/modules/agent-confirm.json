@@ -1,0 +1,11 @@
+{
+  "id": "agent-confirm",
+  "kind": "session-notice",
+  "name": "Agent 等你确认",
+  "api": 1,
+  "version": 1,
+  "show": "agent.input_requested",
+  "clear": ["agent.completed", "agent.started", "agent.resumed", "agent.closed"],
+  "title": "需要你确认",
+  "action": "session.open"
+}

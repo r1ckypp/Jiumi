@@ -1,0 +1,114 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Jiumi Pet Maker</title>
+<style>
+*{box-sizing:border-box}body{background:#f7f4e9;color:#294635;font:16px/1.6 system-ui;margin:0}main{max-width:850px;margin:6vh auto;padding:24px}h1{margin:0}section{background:#fffdf6;border:1px solid #9bab90;border-radius:16px;padding:24px}.layout{display:grid;grid-template-columns:1fr 1fr;gap:18px}.scene{display:grid;place-content:center;text-align:center;background:radial-gradient(#e2cfa8 1px,transparent 1px),#fff1d6;background-size:12px 12px}.scene button{width:145px;height:140px;border:0;background:transparent;position:relative;padding:2px 6px}.row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 0}input{max-width:45%}button{font:inherit;cursor:pointer;border:1px solid #779078;border-radius:8px;padding:7px 13px;background:white;color:inherit}.primary{background:#345c43;color:white}footer{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}@media(max-width:600px){.layout{grid-template-columns:1fr}}
+.file-field{position:relative;padding:2px 8px;border:1px solid #779078;border-radius:5px;font-size:.85em}.file-field input{position:absolute;inset:0;opacity:0;width:100%;height:100%;max-width:none;cursor:pointer}.file-field:focus-within{outline:2px solid currentColor}</style><main><select id="language" aria-label="Language" style="float:right"><option value="en" lang="en">English</option><option value="zh-CN" lang="zh-CN">简体中文</option></select><h1><span data-label="桌宠试衣间">Pet maker</span></h1><p><span data-label="调整外观，点点角色试试它的动作。">Customize your pet, then click to play.</span></p><div class="layout"><section class="scene"><button id="stage"></button><strong id="name"></strong></section><section><h2><span data-label="角色外观">Appearance</span></h2><div id="creation" hidden><label class="row"><span data-label="名字">Name</span><input id="pet-name" required maxlength="40"></label><label class="row"><span data-label="选择角色">Character</span><select id="preset"></select></label><label class="row"><span data-label="导入 PNG">Import PNG</span><span class="file-field"><span data-label="选择文件">Choose file</span><input id="upload" type="file" accept="image/png"></span></label></div><div id="controls"></div><label class="row"><span data-label="试播动作">Preview motion</span><select id="motion"></select></label><button id="reset"><span data-label="恢复初始外观">Reset appearance</span></button><details id="clips"><summary><span data-label="动作帧">Animation frames</span></summary><label class="row"><span data-label="新动作标识">New motion ID</span><input id="new-clip-id" maxlength="48" placeholder="e.g. wing-wave"></label><button type="button" id="new-clip"><span data-label="为新动作选择 PNG">Choose frames for new motion</span></button><label class="row"><span data-label="编辑动作">Edit motion</span><select id="clip-name"></select></label><label class="row"><span data-label="替换整组 PNG">Replace PNG frames</span><span class="file-field"><span data-label="选择文件">Choose file</span><input multiple type="file" accept="image/png" id="clip-files"></span></label><label class="row"><span data-label="每帧毫秒">Milliseconds per frame</span><input type="range" id="clip-duration" min="40" max="1000"></label><label><input type="checkbox" id="clip-loop"><span data-label="持续状态时循环">Loop during state</span></label><p id="clip-status" role="status"></p><button id="clip-remove"><span data-label="移除这组帧">Remove frames</span></button></details><details id="module-panel"><summary><span data-label="本地插件">Local plugins</span></summary><label class="row"><span data-label="安装插件包">Install plugin</span><span class="file-field"><span data-label="选择文件">Choose file</span><input type="file" accept=".json" id="module-file"></span></label><div id="module-list"></div><p id="module-status" role="status"></p></details></section></div><footer><span id="sample"></span><button id="confirm" class="primary"><span data-label="生成桌宠 HTML">Export pet HTML</span></button><button id="export"><span data-label="导出角色包">Export character package</span></button></footer><p id="notice" role="status"></p></main>
+<script id="player">/*PLAYER*/</script><script>
+/*MAKER*/
+try {
+  if(localStorage.getItem('jiumi-language')==='zh-CN') document.documentElement.lang='zh-CN';
+} catch {}
+const [seed,rules]=/*PACKAGE*/;
+const presets=seed?{}:makerPresets(/*PRESETS*/);
+const original=seed??newPet(presets);
+const key='jiumi-design-'+original.id+'-'+original.revision;
+let draft=/*DRAFT*/;
+try{draft=JSON.parse(localStorage.getItem(key))||draft}catch{}
+
+const el=id=>document.getElementById(id);
+const moduleState={...original.moduleState};
+function current(){return {...original,rig:Object.hasOwn(draft,'rig')?draft.rig:original.rig,plugins:draft.plugins??original.plugins,...((draft.modules??original.modules)?.length || draft.modules ? {modules:draft.modules??original.modules,moduleState}:{}),...(draft.clips?{clips:draft.clips}:{}),name:seed?original.name:(draft.name??original.name),image:seed?original.image:(draft.image??original.image),color:draft.color??original.color,appearance:{...original.appearance,...draft.appearance}}}
+let player;
+function refreshMotionMenus(){
+  const previous=el('clip-name').value;
+  petMotionMenu(el('motion'),()=>player,current());
+  el('clip-name').innerHTML=el('motion').innerHTML;
+  el('clip-name').value=previous||'idle';
+  if(!el('clip-name').value){el('clip-name').value='idle';el('clip-name').onchange?.();}
+}
+refreshMotionMenus();
+function render(){const pet=current();el('name').textContent=pet.name;player=mountPet(el('stage'),pet,rules);el('sample').replaceChildren();addNoticeSample(el('stage'),pet,el('sample'));el('motion').value='idle'}
+function persist(){
+  if(seed)try{localStorage.setItem(key,JSON.stringify(draft))}catch{}
+  render()
+}
+function panel(){
+  el('controls').replaceChildren();
+  const pet=current();
+  const fields=[['scale','角色大小',100,60,110]];
+  if(!seed && pet.image)fields.push(['hue','色相',0,-180,180]);
+  if(pet.rig)fields.push(['color','角色配色',pet.color]);
+  else if(!pet.image)fields.push(['ears','耳朵高度',3,2,6],['color','毛色',original.color],['inner','内耳',pet.color],['eyes','眼睛','#352a2d'],['nose','鼻尖','#c86a70']);
+  for(const [id,title,initial,min,max] of fields){
+    const label=document.createElement('label'),field=document.createElement('input');
+    label.className='row';const caption=document.createElement('span');
+    caption.dataset.label=title;caption.textContent=ui(title);label.append(caption,field);field.type=min?'range':'color';field.id=id;
+    if(min){field.min=min;field.max=max}
+    field.value=id==='color'?pet.color:pet.appearance[id]??initial;
+    field.oninput=()=>{if(id==='color'){draft.color=field.value;if(!pet.rig&&!current().appearance.inner)el('inner').value=field.value}else{draft.appearance??={};draft.appearance[id]=min?Number(field.value):field.value}persist()};
+    el('controls').append(label)
+  }render()
+}
+el('reset').onclick=()=>{const pet=current();draft={modules:pet.modules,plugins:pet.plugins,clips:pet.clips,...(seed?{}:{rig:pet.rig,image:pet.image,name:pet.name,color:pet.color})};persist();panel()};
+function download(content,type,filename){
+  const url=URL.createObjectURL(new Blob([content],{type}));
+  const a=document.createElement('a');
+  a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+el('export').onclick=()=>{if(!seed&&!el('pet-name').reportValidity())return;download(JSON.stringify(current(),null,2),'application/json',original.id+'.json')};
+el('confirm').onclick=()=>{
+  if(!seed&&!el('pet-name').reportValidity())return;
+  const pet=current();
+  const doc=document.implementation.createHTMLDocument(pet.name);
+  doc.documentElement.lang=document.documentElement.lang;
+  doc.head.insertAdjacentHTML('afterbegin','<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">');
+  const css=doc.createElement('style');
+  css.textContent='body{margin:0;min-height:100vh;display:grid;place-content:center;background:#f7f4e9;color:#294635;text-align:center;font:16px system-ui}button{position:relative;width:145px;height:140px;border:0;background:transparent;cursor:pointer}p{margin:0}';
+  doc.head.append(css);
+  doc.body.innerHTML='<div data-pet-body><button id="stage" data-movable></button><p id="name" hidden></p></div><p id="feedback" aria-live="polite"></p><label>'+ui('试播动作')+' <select id="motion"></select></label><label><input type="checkbox" id="show-name">'+ui('显示名字')+'</label>';
+  const script=doc.createElement('script');
+  const payload=JSON.stringify([pet,rules]).replaceAll('<',String.fromCharCode(92)+'u003c');
+  script.textContent=el('player').textContent+'\nconst [pet,rules]='+payload+';\n'+
+    "const stage=document.getElementById('stage');const player=mountPet(stage,pet,rules);addNoticeSample(stage,pet,document.body);petMotionMenu(document.getElementById('motion'),()=>player,pet);const label=document.getElementById('name');label.textContent=pet.name;document.getElementById('show-name').onchange=e=>label.hidden=!e.target.checked;stage.addEventListener('pet.tap',e=>document.getElementById('feedback').textContent=ui('摸摸 × ')+e.detail.count);";
+  if(pet.modules?.length){
+    const save=doc.createElement('button');
+    save.id='save-progress';save.textContent=ui('导出当前角色包');doc.body.append(save);
+    script.textContent+='\n'+download.toString()+
+      "\ndocument.getElementById('save-progress').onclick=()=>download(JSON.stringify(pet),'application/json',pet.id+'.json');";
+  }
+  doc.body.append(script);
+  download('<!doctype html>'+doc.documentElement.outerHTML,'text/html;charset=utf-8',pet.name+(doc.documentElement.lang==='en'?'-pet.html':'-桌宠.html'));
+  el('notice').textContent=ui('双击下载的 HTML，即可离线打开你的桌宠。');
+};
+if(!seed){
+  setupMaker(presets,original,values=>{Object.assign(draft,values);panel()});
+  el('stage').addEventListener('pet.tap',e=>el('notice').textContent=ui('摸摸 × ')+e.detail.count);
+}
+modulePanel(current,patch=>{Object.assign(draft,patch);persist();refreshMotionMenus()});
+panel();
+el('clip-name').innerHTML=el('motion').innerHTML;
+el('clip-name').value='idle';
+setupClips(()=>current().clips??{},clips=>{draft.clips=clips;persist();refreshMotionMenus()},name=>player.play(name));
+function refreshLanguage(){
+  el('language').value=document.documentElement.lang;
+  document.title=ui('啾咪 · 桌宠试衣间');
+  for(const item of document.querySelectorAll('[data-label]')) item.textContent=ui(item.dataset.label);
+  el('new-clip-id').placeholder=ui('例如 wing-wave');
+}
+el('language').onchange=()=>{
+  document.documentElement.lang=el('language').value;
+  try{localStorage.setItem('jiumi-language',el('language').value)}catch{}
+  if(!seed && draft.name===undefined){
+    original.name=ui('啾咪');el('pet-name').value=original.name;el('name').textContent=original.name;
+  }
+  el('notice').textContent='';
+  refreshLanguage();
+  document.dispatchEvent(new Event('jiumi-language'));
+  for(const menu of [el('motion'),el('clip-name')]){
+    for(const option of menu.options){
+      if(Object.hasOwn(petMotions,option.value))option.textContent=ui(petMotions[option.value][0]);
+    }
+  }
+};
+refreshLanguage();
+</script></html>

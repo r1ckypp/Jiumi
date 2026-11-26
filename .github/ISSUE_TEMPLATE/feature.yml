@@ -1,0 +1,31 @@
+---
+name: Feature proposal
+description: Propose an improvement to the desktop pet framework.
+labels:
+- enhancement
+body:
+- type: markdown
+  attributes:
+    value: Search existing issues and pull requests first. Keep private data out of
+      attachments.
+- type: textarea
+  id: problem
+  attributes:
+    label: User need
+    description: Who encounters this limitation and when?
+  validations:
+    required: true
+- type: textarea
+  id: proposal
+  attributes:
+    label: Proposed behavior
+    description: Describe the interaction, including any new permissions or events.
+  validations:
+    required: true
+- type: textarea
+  id: success
+  attributes:
+    label: How to verify it
+    description: Give an example that demonstrates the improvement.
+  validations:
+    required: true

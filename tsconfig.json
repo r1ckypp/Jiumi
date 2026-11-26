@@ -1,0 +1,7 @@
+{
+  "compilerOptions": {
+    "target": "ES2020", "module": "none", "strict": true,
+    "outFile": "skill/jiumi-pet/runtime/maker.js", "noEmitOnError": true
+  },
+  "files": ["src/contracts.ts", "src/maker.ts"]
+}

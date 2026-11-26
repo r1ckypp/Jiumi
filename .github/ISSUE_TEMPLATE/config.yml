@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security reporting
+    url: https://github.com/r1ckypp/jiumi/blob/main/docs/SECURITY.md
+    about: Follow the private reporting instructions for sensitive issues.
+  - name: Contribution guide
+    url: https://github.com/r1ckypp/jiumi/blob/main/docs/CONTRIBUTING.md
+    about: Read the commit, issue and pull request guidelines.

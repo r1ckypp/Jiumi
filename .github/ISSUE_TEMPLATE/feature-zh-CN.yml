@@ -1,0 +1,30 @@
+---
+name: 功能建议
+description: 建议一项桌宠框架改进。
+labels:
+- enhancement
+body:
+- type: markdown
+  attributes:
+    value: 请先搜索已有议题和拉取请求，上传附件前请移除私人信息。
+- type: textarea
+  id: problem
+  attributes:
+    label: 用户需求
+    description: 谁会在什么场景下遇到这个限制？
+  validations:
+    required: true
+- type: textarea
+  id: proposal
+  attributes:
+    label: 建议的行为
+    description: 说明交互过程，以及涉及的新权限或事件。
+  validations:
+    required: true
+- type: textarea
+  id: success
+  attributes:
+    label: 验收方式
+    description: 举一个能体现改进效果的例子。
+  validations:
+    required: true

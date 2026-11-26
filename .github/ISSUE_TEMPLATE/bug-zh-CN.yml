@@ -1,0 +1,35 @@
+---
+name: 缺陷报告
+description: 报告一个可以复现的问题。
+labels:
+- bug
+body:
+- type: markdown
+  attributes:
+    value: 请先搜索已有议题和拉取请求，上传附件前请移除私人信息。
+- type: textarea
+  id: context
+  attributes:
+    label: 版本与运行环境
+    description: 请填写提交号或版本、操作系统、宿主或浏览器。
+  validations:
+    required: true
+- type: textarea
+  id: steps
+  attributes:
+    label: 复现步骤
+    description: 从能触发问题的最小宠物或项目开始。
+  validations:
+    required: true
+- type: textarea
+  id: expected
+  attributes:
+    label: 预期行为
+  validations:
+    required: true
+- type: textarea
+  id: actual
+  attributes:
+    label: 实际行为及影响
+  validations:
+    required: true

@@ -1,0 +1,15 @@
+{
+  "id": "pickup", "kind": "state-machine", "api": 1, "version": 1,
+  "name": "拎起和落地", "priority": 50,
+  "enter": {"pet.grab": "held"},
+  "states": {
+    "held": {
+      "motion": "held", "resumeAt": "$self",
+      "on": {"pet.release": "landing", "pet.cancel": "$resume"}
+    },
+    "landing": {
+      "motion": "landing", "after": "$resume", "resumeAt": "$discard",
+      "on": {"pet.grab": "held", "pet.tap": "$resume", "pet.cancel": "$resume"}
+    }
+  }
+}

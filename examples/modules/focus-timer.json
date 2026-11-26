@@ -1,0 +1,18 @@
+{
+  "id": "focus-timer",
+  "name": "专注计时",
+  "api": 1,
+  "version": 1,
+  "events": [
+    "host.ready",
+    "agent.started",
+    "host.tick",
+    "host.resume"
+  ],
+  "capabilities": [
+    "state",
+    "motion"
+  ],
+  "sha256": "3a6a20b477ca1eeeee8480a98900228609554b4f7269c27a56f28aebb8992822",
+  "wasm": "AGFzbQEAAAABDwNgAXwAYAF/AGADf3x8AAIXAgNwZXQEc2F2ZQAAA3BldARwbGF5AAEDAgECBwgBBHN0ZXAAAgplAWMAIABBAUYgAkQAAAAAAAAAAGFxBEAgAUQAAAAAYOM2QaAQAEEBEAEFIAJEAAAAAAAAAABkIAEgAmZxBH8gAEUgAEECRnIgAEEDRnIFQQALBEBEAAAAAAAAAAAQAEECEAELCws="
+}

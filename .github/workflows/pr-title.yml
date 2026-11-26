@@ -1,0 +1,21 @@
+name: Contribution checks
+on:
+  pull_request:
+    types: [opened, edited, reopened, synchronize, ready_for_review]
+permissions: {}
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pull request title
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          node <<'JS'
+          const title = process.env.PR_TITLE;
+          const format = /^(feat|fix|docs|test|refactor|perf|build|ci|chore|revert)\([a-z][a-z0-9-]*\)!?: \S.*$/;
+          if (!format.test(title)) {
+            console.error('Use type(scope): summary. Example: fix(maker): preserve the pet name');
+            process.exit(1);
+          }
+          JS

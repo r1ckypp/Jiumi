@@ -1,0 +1,36 @@
+---
+name: Bug report
+description: Report a reproducible problem with Jiumi.
+labels:
+- bug
+body:
+- type: markdown
+  attributes:
+    value: Search existing issues and pull requests first. Keep private data out of
+      attachments.
+- type: textarea
+  id: context
+  attributes:
+    label: Version and environment
+    description: Include the commit or release, OS and host or browser.
+  validations:
+    required: true
+- type: textarea
+  id: steps
+  attributes:
+    label: Steps to reproduce
+    description: Start with the smallest pet or project that shows the behavior.
+  validations:
+    required: true
+- type: textarea
+  id: expected
+  attributes:
+    label: Expected behavior
+  validations:
+    required: true
+- type: textarea
+  id: actual
+  attributes:
+    label: Observed behavior and impact
+  validations:
+    required: true
