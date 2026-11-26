@@ -28,3 +28,9 @@ Pure HTML runs offline. In the exported pet, start the sample session reminder a
 ## Future extensions
 
 Apply the same capability negotiation to sound and notifications. Exclusive performances can later request a time-limited lease that user gestures revoke. Network providers and cross-device delivery belong to opt-in integrations. These are design directions. The current example implements a notice and user-initiated session return.
+
+## macOS desktop host v1
+
+Every native build uses the same AppKit host. The pet context menu starts with enabled plugin actions. The menu-bar item prioritizes visibility and recovery and groups plugin actions under Interactions. Both menus route to the same handlers. Hiding explicitly suspends player feedback. Reopening the app shows the existing panel.
+
+Window size, floating level, opacity, name visibility, remembered position and the optional global visibility shortcut belong to this device and pet identity. The shortcut starts unbound. Register a replacement with the OS before releasing the existing registration. On conflict, leave the previous binding and stored preference intact. Clearing the shortcut releases it. Screen changes constrain the window to a visible display. Resetting window position and resetting preferences are separate commands.

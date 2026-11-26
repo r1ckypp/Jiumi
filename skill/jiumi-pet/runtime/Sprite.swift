@@ -1,6 +1,86 @@
 import AppKit
 import WebKit
 import CryptoKit
+import Carbon.HIToolbox
+
+struct PetShortcut: Equatable {
+    // Hardware codes keep a saved binding stable across input methods.
+    static let codes: [Character:UInt32] = [
+        "A":0,"S":1,"D":2,"F":3,"H":4,"G":5,"Z":6,"X":7,"C":8,"V":9,"B":11,
+        "Q":12,"W":13,"E":14,"R":15,"Y":16,"T":17,"1":18,"2":19,"3":20,"4":21,
+        "6":22,"5":23,"9":25,"7":26,"8":28,"0":29,"O":31,"U":32,"I":34,"P":35,
+        "L":37,"J":38,"K":40,"N":45,"M":46
+    ]
+    let key: Character
+    let flags: UInt32
+    static let modifiers: [(Character,UInt32,NSEvent.ModifierFlags)] =
+        [("⌃",UInt32(controlKey),.control),("⌥",UInt32(optionKey),.option),
+         ("⇧",UInt32(shiftKey),.shift),("⌘",UInt32(cmdKey),.command)]
+    var label: String {
+        String(Self.modifiers.filter { flags & $0.1 != 0 }.map { $0.0 }) + String(key)
+    }
+    init?(_ text: String) {
+        let chars = text.trimmingCharacters(in:.whitespacesAndNewlines).uppercased()
+        guard let key = chars.last, Self.codes[key] != nil else { return nil }
+        var flags:UInt32 = 0
+        for char in chars.dropLast() {
+            guard let mod = Self.modifiers.first(where: { $0.0 == char }) else { return nil }
+            flags |= mod.1
+        }
+        guard flags & ~UInt32(shiftKey) != 0 else { return nil }
+        self.key = key
+        self.flags = flags
+    }
+    init?(event: NSEvent) {
+        guard let pair = Self.codes.first(where: { $0.value == UInt32(event.keyCode) }) else { return nil }
+        self.init(String(Self.modifiers.filter { event.modifierFlags.contains($0.2) }.map { $0.0 }) + String(pair.key))
+    }
+}
+
+final class VisibilityHotKey {
+    private var handler:EventHandlerRef?
+    private var binding:EventHotKeyRef?
+    private(set) var active:PetShortcut?
+    var pressed: (() -> Void)?
+    init() {
+        var spec = EventTypeSpec(eventClass: OSType(kEventClassKeyboard), eventKind: UInt32(kEventHotKeyPressed))
+        InstallEventHandler(GetApplicationEventTarget(), { _, event, context in
+            guard let context = context else { return OSStatus(eventNotHandledErr) }
+            var id = EventHotKeyID()
+            guard GetEventParameter(event, EventParamName(kEventParamDirectObject), EventParamType(typeEventHotKeyID),
+                                    nil, MemoryLayout<EventHotKeyID>.size, nil, &id) == noErr,
+                  id.signature == 0x4A69756D else { return OSStatus(eventNotHandledErr) }
+            Unmanaged<VisibilityHotKey>.fromOpaque(context).takeUnretainedValue().pressed?()
+            return noErr
+        }, 1, &spec, Unmanaged.passUnretained(self).toOpaque(), &handler)
+    }
+    func replace(with shortcut:PetShortcut?) -> Bool {
+        if shortcut == active { return true }
+        var candidate:EventHotKeyRef?
+        if let shortcut = shortcut {
+            guard handler != nil, let code = PetShortcut.codes[shortcut.key],
+                  RegisterEventHotKey(code, shortcut.flags, EventHotKeyID(signature:0x4A69756D,id:code),
+                    GetApplicationEventTarget(), OptionBits(kEventHotKeyExclusive), &candidate) == noErr else { return false }
+        }
+        if let previous = binding { UnregisterEventHotKey(previous) }
+        binding = candidate
+        active = shortcut
+        return true
+    }
+    deinit {
+        if let binding = binding { UnregisterEventHotKey(binding) }
+        if let handler = handler { RemoveEventHandler(handler) }
+    }
+}
+
+final class SettingsPanel: NSPanel {
+    var record: ((NSEvent) -> Void)?
+    override func sendEvent(_ event:NSEvent) {
+        if event.type == .keyDown, let record = record { record(event); return }
+        super.sendEvent(event)
+    }
+    override func resignKey() { record = nil; super.resignKey() }
+}
 
 final class Stage: WKWebView {
     var petMenu: NSMenu?
@@ -77,7 +157,7 @@ final class SessionBridge: NSObject, WKScriptMessageHandlerWithReply {
         guard message.frameInfo.isMainFrame, let body=message.body as? [String:String] else { replyHandler(false,nil);return }
         if body["method"]=="layout", let panel=panel {
             var frame=panel.frame
-            frame.size.height=body["visible"]=="yes" ? 286 : 170
+            frame.size.height=(body["visible"]=="yes" ? 286 : 170) * frame.width / 170
             if let screen=panel.screen { frame.origin.y=min(frame.origin.y,screen.visibleFrame.maxY-frame.height) }
             panel.setFrame(frame,display:true)
             replyHandler(true,nil);return
@@ -140,13 +220,20 @@ final class PetEvents: NSObject, WKNavigationDelegate {
         }
     }
 }
-final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate {
+final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWindowDelegate {
     let petPanel: NSPanel
     let stage: Stage
     let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
     let commands = NSMenu()
-    let visibility = NSMenuItem()
-    let settings = NSPanel(contentRect: NSRect(x:0,y:0,width:300,height:156),
+    let context = NSMenu()
+    let interactions = NSMenu()
+    let hotKey = VisibilityHotKey()
+    let shortcutField = NSTextField()
+    let feedback = NSTextField(wrappingLabelWithString:"")
+    let remember = NSButton(checkboxWithTitle:"记住桌宠位置",target:nil,action:nil)
+    var restoreControls: (() -> Void)?
+    let name = Bundle.main.object(forInfoDictionaryKey:"CFBundleName") as? String ?? "桌宠"
+    let settings = SettingsPanel(contentRect: NSRect(x:0,y:0,width:390,height:365),
                            styleMask:[.titled,.closable], backing:.buffered, defer:false)
     let defaults: UserDefaults
 
@@ -155,60 +242,110 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate {
         self.stage = stage
         defaults = UserDefaults(suiteName: "studio.jiumi.window." + identity) ?? .standard
         super.init()
-        let name = Bundle.main.object(forInfoDictionaryKey:"CFBundleName") as? String ?? "啾咪"
         item.button?.image = NSImage(systemSymbolName:"pawprint.fill", accessibilityDescription:name)
         if item.button?.image == nil { item.button?.title = "啾" }
         item.button?.toolTip = name
-        commands.delegate = self
-        visibility.action = #selector(togglePet)
-        visibility.target = self
-        commands.addItem(visibility)
-        func add(_ title:String, _ action:Selector, _ target:AnyObject) {
-            commands.addItem(withTitle:title,action:action,keyEquivalent:"").target = target
+        for menu in [commands,context] {
+            menu.delegate = self
+            for (title, action) in [("显示"+name,#selector(togglePet)),("移回当前屏幕",#selector(resetPosition)),
+                                    ("桌宠设置…",#selector(showSettings))] {
+                menu.addItem(withTitle:title,action:action,keyEquivalent:"").target = self
+            }
+            menu.addItem(withTitle:"导出角色包…",action:#selector(Stage.exportPet),keyEquivalent:"").target = stage
+            menu.addItem(.separator())
+            menu.addItem(withTitle:"退出"+name,action:#selector(NSApplication.terminate(_:)),keyEquivalent:"").target = NSApp
         }
-        add("桌宠设置…", #selector(showSettings), self)
-        add("恢复默认位置", #selector(resetPosition), self)
-        add("导出角色包…", #selector(Stage.exportPet), stage)
-        commands.addItem(.separator())
-        add("退出桌宠", #selector(NSApplication.terminate(_:)), NSApp)
         item.menu = commands
-        stage.petMenu = commands
-        menuNeedsUpdate(commands)
-
+        stage.petMenu = context
         settings.title = name + " · 桌宠设置"
         settings.isReleasedWhenClosed = false
+        func place(_ view:NSView,_ x:Int,_ y:Int,_ w:Int,_ h:Int) {
+            view.frame = NSRect(x:x,y:y,width:w,height:h)
+            settings.contentView?.addSubview(view)
+        }
+        func slider(_ label:String,_ key:String,_ initial:Double,_ min:Double,_ max:Double,_ y:Int,_ action:Selector) -> NSSlider {
+            place(NSTextField(labelWithString:label),20,y,72,22)
+            let value = defaults.object(forKey:key) as? Double ?? initial
+            let control = NSSlider(value:value,minValue:min,maxValue:max,target:self,action:action)
+            control.isContinuous = true
+            control.setAccessibilityLabel(label)
+            place(control,100,y,250,24)
+            return control
+        }
+        let size = slider("角色大小","size",1,0.65,1.75,318,#selector(setSize(_:)))
+        setSize(size)
+        let opacity = slider("不透明度","opacity",1,0.35,1,282,#selector(setOpacity(_:)))
+        setOpacity(opacity)
         let floating = NSButton(checkboxWithTitle:"保持桌宠置顶",target:self,action:#selector(setFloating(_:)))
-        floating.frame = NSRect(x:20,y:76,width:245,height:26)
         floating.state = defaults.object(forKey:"floating") as? Bool == false ? .off : .on
         setFloating(floating)
-        let label = NSTextField(labelWithString:"不透明度")
-        label.frame = NSRect(x:20,y:33,width:70,height:22)
-        let opacity = NSSlider(value:defaults.object(forKey:"opacity") as? Double ?? 1,
-                               minValue:0.35,maxValue:1,target:self,action:#selector(setOpacity(_:)))
-        opacity.frame = NSRect(x:92,y:32,width:184,height:24)
-        opacity.isContinuous = true
-        setOpacity(opacity)
+        place(floating,20,245,165,25)
         let nameToggle = NSButton(checkboxWithTitle:"显示名字",target:self,action:#selector(setNameVisible(_:)))
-        nameToggle.frame = NSRect(x:20,y:112,width:245,height:26)
         nameToggle.state = defaults.bool(forKey:"showName") ? .on : .off
-        for control in [floating as NSView,label,opacity,nameToggle] { settings.contentView?.addSubview(control) }
+        place(nameToggle,195,245,150,25)
+        remember.state = defaults.object(forKey:"rememberPosition") as? Bool == false ? .off : .on
+        remember.target = self
+        remember.action = #selector(setRemember)
+        place(remember,20,210,185,25)
+        if remember.state == .on, let point = defaults.string(forKey:"position") {
+            petPanel.setFrameOrigin(NSPointFromString(point))
+        }
+        ensureOnScreen()
+        petPanel.delegate = self
+        place(NSTextField(labelWithString:"全局快捷键 · 显示或隐藏"+name),20,165,350,22)
+        shortcutField.placeholderString = "未绑定"
+        shortcutField.setAccessibilityLabel("显隐快捷键")
+        place(shortcutField,20,123,120,25)
+        for (i,entry) in [("录入",#selector(recordKey)),("应用",#selector(applyKey)),("清除",#selector(clearKey))].enumerated() {
+            place(NSButton(title:entry.0,target:self,action:entry.1),145+i*73,120,72,30)
+        }
+        place(NSTextField(wrappingLabelWithString:"录入组合键，或输入如 ⌃⌥K 的组合再点应用。"),20,73,350,35)
+        place(feedback,20,12,235,52)
+        place(NSButton(title:"重置设置…",target:self,action:#selector(resetSettings)),255,20,110,30)
+        restoreControls = { [weak self] in
+            guard let self = self else { return }
+            size.doubleValue = 1
+            opacity.doubleValue = 1
+            floating.state = .on
+            nameToggle.state = .off
+            self.remember.state = .on
+            self.setSize(size)
+            self.setOpacity(opacity)
+            self.setFloating(floating)
+            self.setNameVisible(nameToggle)
+            self.setRemember()
+            self.clearKey()
+            self.resetPosition()
+            self.feedback.stringValue = "已恢复桌宠设置。"
+        }
+        hotKey.pressed = { [weak self] in self?.togglePet() }
+        if let saved = defaults.string(forKey:"shortcut") {
+            shortcutField.stringValue = saved
+            applyKey()
+        }
         settings.center()
     }
     func loadPluginMenu() {
         stage.evaluateJavaScript("document.getElementById('stage').feedback.menuItems") { result, _ in
             guard let items = result as? [[String:String]] else { return }
-            for entry in items.reversed() {
+            guard !items.isEmpty else { return }
+            let group = NSMenuItem(title:"互动",action:nil,keyEquivalent:"")
+            group.submenu = self.interactions
+            self.commands.insertItem(group,at:2)
+            self.context.insertItem(.separator(),at:0)
+            for (index,entry) in items.enumerated() {
                 guard let label = entry["label"], let event = entry["event"] else { continue }
-                let item = NSMenuItem(title:label, action:#selector(self.selectPluginItem(_:)), keyEquivalent:"")
+                let item = NSMenuItem(title:label,action:#selector(self.selectPluginItem(_:)),keyEquivalent:"")
                 item.target = self
                 item.representedObject = event
-                self.commands.insertItem(item, at:0)
+                self.context.insertItem(item,at:index)
+                self.interactions.addItem(item.copy() as! NSMenuItem)
             }
         }
     }
     @objc func selectPluginItem(_ sender:NSMenuItem) {
         guard let event = sender.representedObject as? String else { return }
-        petPanel.orderFrontRegardless()
+        showPet(true)
         stage.callAsyncJavaScript("return document.getElementById('stage').feedback.selectMenu(event)",
                                   arguments:["event":event], in:nil, in:.page, completionHandler:nil)
     }
@@ -229,24 +366,95 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate {
         petPanel.alphaValue = CGFloat(sender.doubleValue)
         defaults.set(sender.doubleValue,forKey:"opacity")
     }
+    @objc func resetSettings() {
+        let alert = NSAlert()
+        alert.messageText = "恢复"+name+"的桌面设置？"
+        alert.informativeText = "尺寸、位置、外观和显隐快捷键将恢复默认。"
+        alert.addButton(withTitle:"取消")
+        alert.addButton(withTitle:"恢复默认")
+        alert.beginSheetModal(for:settings) { response in
+            if response == .alertSecondButtonReturn { self.restoreControls?() }
+        }
+    }
+    @objc func recordKey() {
+        feedback.stringValue = "按组合键录入，Esc 取消。"
+        settings.record = { [weak self] event in
+            guard let self = self else { return }
+            if event.keyCode == 53 {
+                self.settings.record = nil
+                self.feedback.stringValue = ""
+            } else if let shortcut = PetShortcut(event:event) {
+                self.settings.record = nil
+                self.shortcutField.stringValue = shortcut.label
+                self.applyKey()
+            } else {
+                self.feedback.stringValue = "请用 ⌃、⌥ 或 ⌘ 搭配字母或数字，可加 ⇧。"
+            }
+        }
+    }
+    @objc func applyKey() {
+        settings.record = nil
+        guard let key = PetShortcut(shortcutField.stringValue) else {
+            feedback.stringValue = "请输入有效的组合键。"; return
+        }
+        if hotKey.replace(with:key) {
+            defaults.set(key.label,forKey:"shortcut")
+            shortcutField.stringValue = key.label
+            feedback.stringValue = "已绑定 " + key.label
+        } else {
+            feedback.stringValue = "组合键已占用或不可用。" + (hotKey.active.map {"当前仍使用 " + $0.label} ?? "可通过菜单栏召回。")
+        }
+    }
+    @objc func clearKey() {
+        settings.record = nil
+        _ = hotKey.replace(with:nil)
+        defaults.removeObject(forKey:"shortcut")
+        shortcutField.stringValue = ""
+        feedback.stringValue = "已清除快捷键。"
+    }
+    @objc func setRemember() {
+        defaults.set(remember.state == .on,forKey:"rememberPosition")
+        if remember.state == .on { savePosition() } else { defaults.removeObject(forKey:"position") }
+    }
+    func savePosition() {
+        if remember.state == .on { defaults.set(NSStringFromPoint(petPanel.frame.origin),forKey:"position") }
+    }
+    func windowDidMove(_ notification:Notification) { savePosition() }
+    func ensureOnScreen() {
+        guard let screen = petPanel.screen ?? NSScreen.main else { return }
+        let area = screen.visibleFrame, frame = petPanel.frame
+        petPanel.setFrameOrigin(NSPoint(x:max(area.minX,min(frame.minX,area.maxX-frame.width)),
+                                        y:max(area.minY,min(frame.minY,area.maxY-frame.height))))
+    }
+    func applicationDidChangeScreenParameters(_ notification:Notification) { ensureOnScreen() }
+    @objc func setSize(_ sender:NSSlider) {
+        let zoom = CGFloat(sender.doubleValue)
+        let frame = petPanel.frame
+        stage.pageZoom = zoom
+        petPanel.setContentSize(NSSize(width:170*zoom,height:frame.height/frame.width*170*zoom))
+        defaults.set(zoom,forKey:"size")
+        ensureOnScreen()
+    }
     func menuNeedsUpdate(_ menu:NSMenu) {
-        visibility.title = petPanel.isVisible ? "隐藏桌宠" : "显示桌宠"
+        menu.items.first(where: {$0.action == #selector(togglePet)})?.title = (petPanel.isVisible ? "隐藏" : "显示") + name
     }
-    @objc func togglePet() {
-        if petPanel.isVisible { petPanel.orderOut(nil) } else { petPanel.orderFrontRegardless() }
-        menuNeedsUpdate(commands)
+    func showPet(_ visible:Bool) {
+        if visible { petPanel.orderFrontRegardless() } else { petPanel.orderOut(nil) }
+        stage.callAsyncJavaScript("document.getElementById('stage').feedback?.setVisible(visible)",
+                                  arguments:["visible":visible],in:nil,in:.page,completionHandler:nil)
     }
+    @objc func togglePet() { showPet(!petPanel.isVisible) }
     @objc func showSettings() {
         NSApp.activate(ignoringOtherApps:true)
         settings.makeKeyAndOrderFront(nil)
     }
     @objc func resetPosition() {
-        guard let screen = petPanel.screen ?? NSScreen.main else { return }
-        petPanel.setFrameOrigin(NSPoint(x:screen.visibleFrame.maxX-190,y:screen.visibleFrame.minY+45))
-        petPanel.orderFrontRegardless()
+        guard let screen = NSScreen.screens.first(where: { $0.frame.contains(NSEvent.mouseLocation) }) ?? NSScreen.main else { return }
+        petPanel.setFrameOrigin(NSPoint(x:screen.visibleFrame.maxX-petPanel.frame.width-20,y:screen.visibleFrame.minY+45))
+        showPet(true)
     }
     func applicationShouldHandleReopen(_ sender:NSApplication, hasVisibleWindows:Bool) -> Bool {
-        petPanel.orderFrontRegardless()
+        showPet(true)
         return true
     }
 }

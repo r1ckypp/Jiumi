@@ -355,7 +355,13 @@ function mountPet(button, pet, catalog, host) {
       return accepted;
     };
     motion.dispose=()=>{modules.dispose();dispose();};
-    motion.setVisible=value=>{setVisible(value);modules.send(value?'host.resume':'host.hide');};
+    let moduleVisible=true;
+    motion.setVisible=value=>{
+      if(value===moduleVisible)return;
+      moduleVisible=value;
+      setVisible(value);
+      modules.send(value?'host.resume':'host.hide');
+    };
   }
   button.feedback=motion;
   if(document.hidden)motion.setVisible(false);
