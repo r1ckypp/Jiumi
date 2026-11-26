@@ -13,6 +13,12 @@ Make me a blue jiumi named Bubble.
 
 ![Creating a Jiumi desktop pet with an agent.](docs/assets/create-jiumi-with-agent.gif)
 
+## Why Jiumi?
+
+Developers package software. Users download and install it. With AI, you can describe the desktop pet you want and have your own agent build it on your computer.
+
+Jiumi provides a lightweight, modular framework you can extend. Draw the artwork yourself or generate it with AI. You decide how your pet looks, how it moves, and when it responds to you.
+
 ## What you can customize
 
 - **Your artwork, your pet.** A single transparent PNG is enough to start. Add animation frames for a blink or a wave, change how your pet reacts to touch, or extend its behavior with local plugins.
@@ -67,11 +73,14 @@ Try the bundled focus timer. Expand the local plugins section in the maker and i
 
 ## Desktop agent support matrix
 
-This matrix tracks Jiumi integration work. macOS is the first test platform. Exported HTML opens on Windows and Linux today. Plugin installation, creation inside each client and session integration on those two systems still need verification.
+In principle, any AI agent that can read and follow instructions can use the Jiumi Skill. Whether it can use local artwork, launch a floating pet or show a reminder when a task needs approval depends on the tools the host exposes and the permissions you grant.
+
+macOS is the first test platform. Exported HTML opens on Windows and Linux today. Plugin installation, creation inside each client and session integration on those two systems still need verification.
 
 | Desktop client | Priority | Create via Skill | Installable plugin | Session events and return |
 | --- | --- | --- | --- | --- |
 | [ChatGPT desktop](https://learn.chatgpt.com/docs/plugins) | First | HTML creation tried on macOS | Local install tried on macOS | Desktop test pending |
+| [Claude Desktop · Cowork](https://support.claude.com/en/articles/15520349-use-claude-cowork-on-web-desktop-and-mobile) | Planned for verification | To verify | To verify | To verify |
 | [Doubao Work](https://www.doubao.com/work) | Next | To verify | To investigate | To investigate |
 | [WorkBuddy](https://cloud.tencent.com/product/workbuddy) | Next | To verify | To investigate | To investigate |
 | [QwenWork](https://qwenwork.cn/docs/desktop) | Next | To verify | To investigate | To investigate |

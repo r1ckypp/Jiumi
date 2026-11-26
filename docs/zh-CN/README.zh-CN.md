@@ -13,6 +13,12 @@
 
 ![通过 Agent 创建啾咪桌宠。](../assets/create-jiumi-with-agent.gif)
 
+## 为什么做啾咪
+
+分发软件要打包，使用软件要下载安装。有了 AI，你可以直接告诉它想养一只什么样的桌宠，让它在本机帮你做出来。
+
+啾咪提供轻量、可扩展的模块化框架。素材可以自己画，也可以让 AI 生成。它长什么样、怎么动、什么时候回应你，都由你决定。
+
 ## 框架特色
 
 - **从一张图开始，定制到每个动作。** 一张透明 PNG 就能做出第一只宠物。你可以给它画两帧眨眼，让它被摸时挥挥爪子，也可以装上本地插件，为它加上新本领。形象和动作素材都可以由你自己提供。
@@ -67,11 +73,14 @@
 
 ## 桌面 Agent 支持矩阵
 
-下表记录啾咪在各客户端的适配进度。macOS 是首轮验收平台。Windows 和 Linux 目前可打开导出的 HTML，各客户端在这两个系统上的插件安装、创建和会话联动均待验收。
+原则上，任何能读取并遵循说明的 AI 助手都可以使用啾咪 Skill。能否用本机图片制作桌宠、启动悬浮窗，或在任务等待确认时弹出提醒，取决于宿主工具开放的接口和用户授予的权限。
+
+macOS 是首轮验收平台。Windows 和 Linux 目前可打开导出的 HTML，各客户端在这两个系统上的插件安装、创建和会话联动均待验收。
 
 | 桌面客户端 | 优先级 | Skill 创建 | 插件安装 | 会话事件与返回 |
 | --- | --- | --- | --- | --- |
 | [ChatGPT 桌面版](https://learn.chatgpt.com/docs/plugins) | 首个适配 | macOS 已试用 HTML 创建 | macOS 已试用本地安装 | 待客户端验收 |
+| [Claude Desktop · Cowork](https://support.claude.com/en/articles/15520349-use-claude-cowork-on-web-desktop-and-mobile) | 计划验证 | 待验证 | 待验证 | 待验证 |
 | [豆包工作](https://www.doubao.com/work) | 后续适配 | 待验证 | 待调研 | 待调研 |
 | [WorkBuddy](https://cloud.tencent.com/product/workbuddy) | 后续适配 | 待验证 | 待调研 | 待调研 |
 | [千问办公（QwenWork）](https://qwenwork.cn/docs/desktop) | 后续适配 | 待验证 | 待调研 | 待调研 |
