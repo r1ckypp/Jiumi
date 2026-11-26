@@ -17,6 +17,13 @@ function validateMachine(m){
   }
   routes(m.enter,local);
   if(!Object.keys(m.enter).length)fail();
+  if(m.menu!==undefined){
+    if(!record(m.menu)||Object.keys(m.menu).length>8)fail();
+    for(const [id,label] of Object.entries(m.menu)){
+      if(!key(id)||typeof label!=='string'||!label.trim()||label.length>80||
+         !Object.hasOwn(m.enter,'menu.'+m.id+'.'+id))fail();
+    }
+  }
   for(const s of Object.values(m.states)){
     if(!record(s)||!key(s.motion))fail();
     if(s.on!==undefined)routes(s.on,exit);

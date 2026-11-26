@@ -15,6 +15,12 @@ def list_pets() -> list:
 
 
 @server.tool()
+def install_pet_module(pet_id:str,module_id:str,version:int,module:dict,clips:dict | None=None) -> dict:
+    """Install an exact downloaded module in an existing local pet. Optionally supply missing character clips."""
+    return pet.install_module(pet_id,module,module_id,version,clips)
+
+
+@server.tool()
 def save_pet(pet_id:str) -> dict:
     """Save a local pet to the user's account with revision checking."""
     return pet.save(pet_id)

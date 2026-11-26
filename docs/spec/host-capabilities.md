@@ -27,4 +27,4 @@ Pure HTML runs offline. In the exported pet, start the sample session reminder a
 
 ## Future extensions
 
-Apply the same capability negotiation to menu contributions, sound and notifications. Exclusive performances can later request a time-limited lease that user gestures revoke. Network providers and cross-device delivery belong to opt-in integrations. These are design directions. The current example implements a notice and user-initiated session return.
+Apply the same capability negotiation to sound and notifications. Exclusive performances can later request a time-limited lease that user gestures revoke. Network providers and cross-device delivery belong to opt-in integrations. These are design directions. The current example implements a notice and user-initiated session return.

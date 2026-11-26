@@ -1,0 +1,9 @@
+{
+  "id": "feed", "kind": "state-machine", "api": 1, "version": 1,
+  "name": "喂一口", "priority": 25,
+  "menu": {"bite": "喂一口"},
+  "enter": {"menu.feed.bite": "eating"},
+  "states": {
+    "eating": {"motion": "eat", "after": "$resume", "resumeAt": "$discard"}
+  }
+}

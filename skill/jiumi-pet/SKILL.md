@@ -12,3 +12,5 @@ Run `python3 pet.py create "NAME" --output "DIRECTORY"`. Deliver the HTML previe
 Load [articulation](references/articulation.md) only when the brief needs independently articulated humanoid limbs, custom part art or a special frame performance. Infer needs from the requested actions. Ask only about a material creative choice the description leaves open.
 
 For local import, launch, plugins or event hooks, consult [local workflows](references/workflows.md) as needed.
+
+For a community installation on an existing pet, use the fixed ID and version from the detail page with remote MCP get_community_module. Inspect the existing character and preserve its motions. Pass the downloaded JSON to local install_pet_module or run `python3 pet.py install-module UUID module.json --module-id ID --version N`. Supply missing character clips through `--clips clips.json` (a map of motion IDs to frame sequences). Export and try the command offline.

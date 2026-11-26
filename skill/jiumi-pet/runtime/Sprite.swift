@@ -194,6 +194,24 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate {
         for control in [floating as NSView,label,opacity,nameToggle] { settings.contentView?.addSubview(control) }
         settings.center()
     }
+    func loadPluginMenu() {
+        stage.evaluateJavaScript("document.getElementById('stage').feedback.menuItems") { result, _ in
+            guard let items = result as? [[String:String]] else { return }
+            for entry in items.reversed() {
+                guard let label = entry["label"], let event = entry["event"] else { continue }
+                let item = NSMenuItem(title:label, action:#selector(self.selectPluginItem(_:)), keyEquivalent:"")
+                item.target = self
+                item.representedObject = event
+                self.commands.insertItem(item, at:0)
+            }
+        }
+    }
+    @objc func selectPluginItem(_ sender:NSMenuItem) {
+        guard let event = sender.representedObject as? String else { return }
+        petPanel.orderFrontRegardless()
+        stage.callAsyncJavaScript("return document.getElementById('stage').feedback.selectMenu(event)",
+                                  arguments:["event":event], in:nil, in:.page, completionHandler:nil)
+    }
     func applyNameVisibility() {
         stage.callAsyncJavaScript("document.getElementById('label').hidden = !visible",
                                   arguments:["visible":defaults.bool(forKey:"showName")],
@@ -235,7 +253,7 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate {
 let controls = PetControls(panel:panel,stage:view,identity:bundled == nil ? file.deletingLastPathComponent().lastPathComponent : Bundle.main.bundleIdentifier ?? "local")
 app.delegate = controls
 let events = PetEvents()
-events.onReady = { controls.applyNameVisibility() }
+events.onReady = { controls.applyNameVisibility(); controls.loadPluginMenu() }
 view.navigationDelegate = events
 view.loadFileURL(file,allowingReadAccessTo:file.deletingLastPathComponent())
 panel.orderFrontRegardless()

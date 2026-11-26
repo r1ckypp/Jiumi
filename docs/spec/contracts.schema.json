@@ -464,6 +464,22 @@
               }
             }
           }
+        },
+        "menu": {
+          "type": "object",
+          "maxProperties": 8,
+          "propertyNames": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9-]{0,47}$",
+            "not": {
+              "const": "constructor"
+            }
+          },
+          "additionalProperties": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "\\S"
+          }
         }
       }
     },

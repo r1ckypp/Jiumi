@@ -72,6 +72,7 @@ interface StateMachineModule {
   name:string;
   version:number;
   priority:number;
+  menu?:Record<string,string>;
   enter:Record<string,string>;
   states:Record<string,{motion:string;on?:Record<string,string>;after?:string;resumeAt?:string}>;
 }

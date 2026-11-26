@@ -299,6 +299,27 @@ function petHands(button,feedback){
     dispose(){finish();clearTimeout(handTimer);listeners.abort();hand.remove();}
   };
 }
+function attachPetMenu(stage,pet,nativeMenu){
+  const items=petMachines(pet).flatMap(module=>Object.entries(module.menu??{}).map(([key,label])=>({
+    event:'menu.'+module.id+'.'+key, label:ui(label)
+  })));
+  const feedback=stage.feedback;
+  feedback.menuItems=items;
+  feedback.selectMenu=event=>{
+    if(!items.some(item=>item.event===event))return false;
+    return feedback.dispatch({v:1,id:crypto.randomUUID(),source:'menu',type:event,at:Date.now()});
+  };
+  if(nativeMenu || !items.length)return;
+  const select=document.createElement('select');
+  select.setAttribute('aria-label',ui('互动'));
+  select.add(new Option(ui('互动'),''));
+  for(const item of items)select.add(new Option(item.label,item.event));
+  select.onchange=()=>{feedback.selectMenu(select.value);select.selectedIndex=0;};
+  stage.after(select);
+  const dispose=feedback.dispose;
+  feedback.dispose=()=>{select.remove();dispose();};
+}
+
 function mountPet(button, pet, catalog, host) {
   button.feedback?.dispose();
   button.replaceChildren();
@@ -349,6 +370,7 @@ function mountPet(button, pet, catalog, host) {
     button.dispatchEvent(new CustomEvent('pet.tap',{detail:{count}}));
   };
   attachSessionNotices(button,pet,host);
+  attachPetMenu(button,pet,host?.nativeMenu);
   return motion;
 }
 

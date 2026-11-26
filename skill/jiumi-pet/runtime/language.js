@@ -1,4 +1,6 @@
 const englishLabels = {
+  "互动": "Interactions",
+  "喂一口": "Feed a bite",
   "啾咪 · 桌宠试衣间": "Jiumi Pet Maker",
   "桌宠试衣间": "Pet maker",
   "调整外观，点点角色试试它的动作。": "Customize your pet, then click to play.",

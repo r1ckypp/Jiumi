@@ -33,6 +33,11 @@ def validate_machine(m):
 
     routes(m.get("enter"),names)
     check(bool(m["enter"]),"需要入口事件")
+    menu=m.get("menu",{})
+    check(isinstance(menu,dict) and len(menu)<=8 and all(
+        valid_id(key) and isinstance(label,str) and label.strip() and len(label)<=80
+        and f"menu.{m['id']}.{key}" in m["enter"] for key,label in menu.items()
+    ),"插件菜单或入口事件无效")
     for state in states.values():
         check(valid_id(state.get("motion")),"动作名无效")
         routes(state.get("on",{}),exits)

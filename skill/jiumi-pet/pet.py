@@ -1,4 +1,4 @@
-from portable import SUGAR_COLORS, validate_portable
+from portable import SUGAR_COLORS, validate_module, validate_portable
 from preview_page import player_source, render_preview
 import argparse
 import base64
@@ -111,6 +111,44 @@ def create(name,color=None,image=None,animal=None,modules=None,character=None,la
     return result
 
 
+def install_module(pid, module, module_id, version, clips=None):
+    """Install one pinned module and its missing character clips as a single edit."""
+    validate_module(module)
+    if module["id"] != module_id or module["version"] != version:
+        raise ValueError("下载的插件与所选 ID 或版本不符")
+    if clips is not None and not isinstance(clips, dict):
+        raise ValueError("动作配置应为动作名到动作帧的映射")
+    directory = folder(pid)
+    with (directory / ".install.lock").open("a+b") as lock:
+        if os.name == "nt":
+            import msvcrt
+            lock.seek(0)
+            msvcrt.locking(lock.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock, fcntl.LOCK_EX)
+        role = read(pid)
+        modules = role.setdefault("modules", [])
+        previous = next((m for m in modules if m["id"] == module_id), None)
+        if previous:
+            if previous["version"] > version or (previous["version"] == version and previous != module):
+                raise ValueError("已安装更高版本或同版本内容冲突")
+            modules[modules.index(previous)] = module
+        else:
+            modules.append(module)
+        for key, clip in (clips or {}).items():
+            installed = role.setdefault("clips", {})
+            if key in installed and installed[key] != clip:
+                raise ValueError("角色已有同名动作：" + key)
+            installed[key] = clip
+        if module_id not in role["plugins"]:
+            role["plugins"].append(module_id)
+        validate_portable(role)
+        store(role)
+        return {"pet_id":role["id"], "module_id":module_id, "version":version,
+                "preview":str(designer(pid))}
+
+
 def restore(pid):
     pet=api("pets/"+str(uuid.UUID(pid)))
     catalog=api("plugins")
@@ -187,7 +225,7 @@ def window_page(pid):
     payload=json.dumps([pet,rules]).replace("<","\\u003c")
     html="""<!doctype html><meta charset=utf-8><style>*{box-sizing:border-box}body{margin:0;background:transparent;text-align:center;font:13px system-ui}button{width:145px;height:140px;background:transparent;border:0;position:relative;cursor:pointer}footer{display:inline-block;background:#fff8e8;color:#47392c;border-radius:10px;padding:2px 10px;user-select:none}footer[hidden]{display:none}body{position:absolute;bottom:0;width:100%;height:170px}body>aside{position:absolute!important;bottom:100%;width:100%!important}</style><button id="stage" title="轻点抚摸，长按拖动"></button><br><footer id="label" hidden></footer><script>"""
     html+=player_source([pet["rig"]["kind"]] if pet.get("rig") else [])+"\nconst [pet,rules]="+payload+";"
-    html+="const channel=window.webkit?.messageHandlers?.petSession;const host=channel?{session:(method,target)=>channel.postMessage({method,...target}),layout:show=>channel.postMessage({method:'layout',visible:show?'yes':'no'})}:undefined;mountPet(stage,pet,rules,host);label.textContent=pet.name;stage.addEventListener('pet.tap',e=>label.textContent=pet.name+' · '+e.detail.count);</script>"
+    html+="const channel=window.webkit?.messageHandlers?.petSession;const host=channel?{nativeMenu:true,session:(method,target)=>channel.postMessage({method,...target}),layout:show=>channel.postMessage({method:'layout',visible:show?'yes':'no'})}:undefined;mountPet(stage,pet,rules,host);label.textContent=pet.name;stage.addEventListener('pet.tap',e=>label.textContent=pet.name+' · '+e.detail.count);</script>"
     page=base/"preview.html"
     write(page,html)
     return page
@@ -251,6 +289,10 @@ def main():
         sub.add_parser(cmd)
     app_builder=sub.add_parser("desktop-app")
     app_builder.add_argument("id"); app_builder.add_argument("directory")
+    install=sub.add_parser("install-module")
+    install.add_argument("id"); install.add_argument("module",type=Path)
+    install.add_argument("--module-id",required=True); install.add_argument("--version",type=int,required=True)
+    install.add_argument("--clips",type=Path,help="可选的角色动作 JSON 映射")
     importer=sub.add_parser("import")
     importer.add_argument("path")
     importer.add_argument("--extensions")
@@ -271,6 +313,9 @@ def main():
                 print(json.dumps(result,ensure_ascii=False))
                 sys.exit(1)
     elif a.cmd=="desktop-app": result=desktop_app(a.id,a.directory)
+    elif a.cmd=="install-module":
+        result=install_module(a.id,json.loads(a.module.read_text()),a.module_id,a.version,
+                              json.loads(a.clips.read_text()) if a.clips else None)
     elif a.cmd=="import": result=import_package(a.path,a.extensions)
     elif a.cmd=="connect": result=connect()
     elif a.cmd=="list": result=[{"id":p["id"],"name":p["name"],"revision":p["revision"]} for p in api("pets")]

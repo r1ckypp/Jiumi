@@ -14,3 +14,5 @@ description: 使用预设或自带 PNG 在本机制作桌宠，离线预览、�
 当动作需要人形关节联动、特定部件素材或独立表演片段时，才读取[进阶动作制作](references/articulation.md)。由 Agent 根据动作推断制作方式，只有影响成品的创作取舍确实不清楚时再询问。
 
 需要本机导入、启动桌宠、安装插件或监听事件时，按需读取[本地操作指南](references/workflows.md)。
+
+从社区安装到已有桌宠时，通过远程 MCP 的 get_community_module 获取详情页指定 ID 和版本。检查原角色并沿用已有动作，将完整 JSON 交给本地 install_pet_module，或运行 `python3 pet.py install-module UUID module.json --module-id ID --version N`。缺少角色动作时用 `--clips clips.json` 提供动作名到帧序列的映射，导出后从菜单离线试玩。

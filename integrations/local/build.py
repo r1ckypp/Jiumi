@@ -47,7 +47,7 @@ def build_skill(skill_name):
         for path in sorted([*source.glob("*.py"), *(source / "runtime").glob("*")]):
             package.write(path, f"{skill_name}/{path.relative_to(source)}")
         for path in [root / "examples/modules/focus-timer.json", source / "runtime/pickup.json",
-                     root / "examples/modules/agent-confirm.json", root / "examples/plugins/tap-confetti.json"]:
+                     root / "examples/modules/feed.json", root / "examples/modules/agent-confirm.json", root / "examples/plugins/tap-confetti.json"]:
             package.write(path, f"{skill_name}/examples/{path.name}")
         package.write(maker, f"{skill_name}/maker.html")
         package.write(root / "docs/spec/contracts.schema.json", f"{skill_name}/contracts.schema.json")
