@@ -4,8 +4,6 @@ description: Create a desktop pet locally from a preset or your PNG. Preview, pe
 ---
 
 # Create a Jiumi pet
-**English** · [Simplified Chinese](SKILL.zh-CN.md)
-
 
 Use the user's description to deliver a ready-to-play character. Default to the sugar-cube chick; for a named animal use its preset (e.g. `--animal pig`). Set `--color` only when requested. Ordinary creations use pre-aligned moving parts. Skip technical choices and joint setup.
 

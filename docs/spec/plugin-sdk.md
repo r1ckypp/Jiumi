@@ -1,7 +1,5 @@
 # Offline plugin SDK v1
 
-**English** · [Simplified Chinese](plugin-sdk.zh-CN.md)
-
 The focus timer in `examples/focus-timer/index.ts` shows how to compile the AssemblyScript subset of TypeScript to WebAssembly. Authors need a compiler at build time. The host runs the result offline. SDK v1 supports small modules that keep time, receive assistant events and request pet motions.
 
 ## Package and execution

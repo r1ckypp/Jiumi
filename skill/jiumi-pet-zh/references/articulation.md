@@ -1,7 +1,5 @@
 # 进阶动作制作
 
-[English](articulation.md) · **简体中文**
-
 用户描述的人形需要跑跳、挥剑或肘膝联动时，使用 pet.py create 名字 --character humanoid；明确需要骑士时用 --character knight，含头盔、盾牌和剑。预设内置可试播的奔跑和挥剑轨道。方糖动物使用对应物种预设，自定义动物从最接近的体型替换部件。
 
 两个模板都支持 --layers layers.json。键为关节名，值为透明 PNG 的 data URL，每张使用 160×160 画布，连接点在 (80,80)，只绘制本部件。前臂继承上臂旋转。导入整张原画时使用 --image 保持原样。

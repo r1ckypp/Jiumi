@@ -33,7 +33,7 @@ A stable pet ID travels with the artwork, settings, enabled plugins and revision
 
 Test the baseline offline with a single image and optional plugins disabled. Check preview, touch, HTML export and reopening. For a desktop host, also check hiding and recalling the pet. Test extension enablement, interruption, recovery and failure separately.
 
-Keep English and Simplified Chinese documentation paired. Record confirmed design decisions and distinguish implemented behavior from proposals. Use project terminology in names, comments and attribution. Answer requests for advice without editing files unless implementation is requested.
+Keep entry points and community guides bilingual. Maintain separate English and Chinese Skill directories. Write design specifications in English under `docs/spec/`. Record confirmed design decisions and distinguish implemented behavior from proposals. Use project terminology in names, comments and attribution. Answer requests for advice without editing files unless implementation is requested.
 
 ## Submitting changes
 

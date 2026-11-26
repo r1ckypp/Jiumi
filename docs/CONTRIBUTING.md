@@ -37,7 +37,7 @@ The browser checks use Python Playwright and Google Chrome. Install Playwright i
 
 ## Translate and review
 
-English lives in the unsuffixed Markdown files. Find the Chinese version via the language link. Project and community translations live in `docs/zh-CN/`; design translations sit beside their English versions in `docs/spec/`. When changing behavior, update both versions, their language links and the relevant example. Keep tool names, file names, protocol fields and commands intact. Small fixes and reports are welcome in either language.
+Project and community translations live in `docs/zh-CN/`. Keep English Skill instructions in `skill/jiumi-pet/` and Chinese instructions in `skill/jiumi-pet-zh/`. Maintain design specifications in English under `docs/spec/`. For behavior changes, update the relevant specification, both sets of user instructions and the example. Keep tool names, file names, protocol fields and commands intact. Small fixes and reports are welcome in either language.
 
 Discuss ideas respectfully, protect other people's private data and give feedback about the work. See the [community guidelines](CODE_OF_CONDUCT.md) and [private security reporting guidance](SECURITY.md).
 

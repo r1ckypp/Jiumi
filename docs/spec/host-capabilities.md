@@ -1,7 +1,5 @@
 # Host capabilities and session notices
 
-**English** · [Simplified Chinese](host-capabilities.zh-CN.md)
-
 Adapters report facts with v1 events. A portable plugin requests feedback. Each host renders supported feedback and resolves user actions against device-local capabilities. Archives carry the plugin definition. Session destinations, pending requests, credentials and device grants stay local.
 
 ## Body and notice channels

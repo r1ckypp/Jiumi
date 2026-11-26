@@ -1,7 +1,5 @@
 # Local workflows
 
-**English** · [Simplified Chinese](workflows.zh-CN.md)
-
 ## Create and keep a pet
 
 Open the bundled `maker.html`, choose a preset or import a transparent PNG, name the pet, then click or hold and drag it. Export the pet as HTML to play with it, or export its JSON package to continue editing it with another agent. Keep the UUID when editing the same character.

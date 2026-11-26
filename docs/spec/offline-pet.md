@@ -1,7 +1,5 @@
 # Offline pets, motion assets and community plugins
 
-**English** · [Simplified Chinese](offline-pet.zh-CN.md)
-
 ## Runtime contract
 
 A finished pet opens, reacts to touch and runs its installed motions and plugins offline. A standalone HTML file embeds the player, artwork and selected modules. The desktop edition shares the package and feedback semantics and bundles its host. The user needs a browser or the target OS. Compilation happens on the build machine. Image generation is optional during creation. Core playback requires only a browser or the bundled native host.

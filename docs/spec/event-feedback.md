@@ -1,7 +1,5 @@
 # Pet events and feedback v1
 
-**English** · [Simplified Chinese](event-feedback.zh-CN.md)
-
 ## Runtime boundary
 
 The offline editor, exported HTML and native window share `mountPet` and its embedded JavaScript scheduler. Running `watch` explicitly starts the native bridge. One listener binds to one local pet using a private socket and exclusive lock. Archives carry character data, motion mappings and selected plugins. Device bindings, event streams and permissions stay on the device.
