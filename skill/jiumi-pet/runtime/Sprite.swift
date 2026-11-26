@@ -252,6 +252,7 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
     let moveDown = NSButton(title:"下移",target:nil,action:nil)
     var sleeping=false
     var pluginRows = [[String:Any]]()
+    var availableActions = [[String:String]]()
     var actionRows = [[String:String]]()
     var commandGroup:NSMenuItem?
     var insertedItems = [NSMenuItem]()
@@ -458,7 +459,7 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
             guard let data=result as? [String:Any], let plugins=data["plugins"] as? [[String:Any]],
                   let actions=data["actions"] as? [[String:String]] else { return }
             self.pluginRows=plugins
-            self.actionRows=actions
+            self.availableActions=actions
             self.renderMenus()
         }
     }
@@ -468,8 +469,8 @@ final class PetControls: NSObject, NSMenuDelegate, NSApplicationDelegate, NSWind
         let labels=defaults.dictionary(forKey:"actionLabels") as? [String:String] ?? [:]
         let previousPlugin=pluginChoice.selectedItem?.representedObject as? String
         let previousAction=actionChoice.selectedItem?.representedObject as? String
-        let ordered=order.compactMap { id in actionRows.first { $0["event"]==id } }
-            + actionRows.filter { !order.contains($0["event"] ?? "") }
+        let ordered=order.compactMap { id in availableActions.first { $0["event"]==id } }
+            + availableActions.filter { !order.contains($0["event"] ?? "") }
         actionRows=ordered
         pluginChoice.removeAllItems()
         for plugin in pluginRows {
