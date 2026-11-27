@@ -1,6 +1,6 @@
 # Contributing to Jiumi
 
-**English** · [Simplified Chinese](zh-CN/CONTRIBUTING.zh-CN.md)
+**English** · [简体中文](zh-CN/CONTRIBUTING.zh-CN.md)
 
 A useful first contribution might be a clearer translation, a pet that demonstrates a missing motion, or an adapter for a tool you already use. Describe what the pet should do and how someone can see the change on their own machine.
 

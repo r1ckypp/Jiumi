@@ -1,6 +1,6 @@
 # Jiumi documentation
 
-**English** · [Simplified Chinese](zh-CN/index.zh-CN.md)
+**English** · [简体中文](zh-CN/index.zh-CN.md)
 
 - **Make a pet offline** — [Getting started](../README.md) · [Skill guide](../skill/jiumi-pet/SKILL.md)
 - **Extend the framework** — [Offline runtime](spec/offline-pet.md) · [Character rendering](spec/character-rendering.md) · [Package schema](spec/contracts.schema.json)

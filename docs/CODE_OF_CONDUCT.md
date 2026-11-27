@@ -1,6 +1,6 @@
 # Community guidelines
 
-**English** · [Simplified Chinese](zh-CN/CODE_OF_CONDUCT.zh-CN.md)
+**English** · [简体中文](zh-CN/CODE_OF_CONDUCT.zh-CN.md)
 
 These guidelines apply in project issues, reviews and discussions. Welcome people working in either language and at every level of experience. Explain the behavior you observed, offer concrete alternatives and give authors credit for their work.
 

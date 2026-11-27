@@ -1,6 +1,6 @@
 # Contributing to the Jiumi framework
 
-**English** · [Simplified Chinese](docs/zh-CN/AGENTS.zh-CN.md)
+**English** · [简体中文](docs/zh-CN/AGENTS.zh-CN.md)
 
 Jiumi is a lightweight, extensible framework for desktop pets. A creator can supply their own artwork, make a character with their preferred agent or the standalone maker, and run, edit and export it entirely offline. Keep this workflow independent of accounts and running services. External services are optional integrations. See the [README](README.md) for current capabilities.
 

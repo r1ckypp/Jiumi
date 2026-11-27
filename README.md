@@ -1,6 +1,6 @@
 # Jiumi
 
-**English** · [Simplified Chinese](docs/zh-CN/README.zh-CN.md) · [Documentation](docs/README.md)
+**English** · [简体中文](docs/zh-CN/README.zh-CN.md) · [Documentation](docs/README.md)
 
 Jiumi is a lightweight, extensible framework that makes it easy for any agent to build custom desktop pets.
 
