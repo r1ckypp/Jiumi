@@ -2,7 +2,7 @@
   "name": "jiumi-core",
   "private": true,
   "scripts": {
-    "build": "tsc -p tsconfig.json && node examples/focus-timer/build.mjs && python3 integrations/local/build.py"
+    "build": "tsc -p tsconfig.json && node examples/focus-timer/build.mjs && node integrations/local/build.mjs"
   },
   "devDependencies": {
     "assemblyscript": "0.28.8",
