@@ -27,3 +27,9 @@ The interrupted state's `resumeAt` selects its own state (`$self`, default), ano
 ## Menu commands
 
 A state machine can declare up to eight menu commands as a map of local IDs to plain-text labels. Each command needs an entry named `menu.<plugin-id>.<command-id>`. Enabled commands appear in the HTML interaction selector and the macOS context and status menus. The feed example requests the motion `eat`. Supply a character-specific clip under that name or assign an existing motion through the character's motion mapping. The state machine determines interruption and completion.
+
+An interaction state may declare `timeoutMs` to resume the underlying state automatically. The host starts a new deadline on entry, including event transitions back to the same state. Unrelated events leave the deadline alone. A suspended state can expire while a higher-priority interaction continues. Hiding the player, unloading the plugin or disposing the instance releases its timers. Use this for inactivity-driven interactions such as typing. States driven by explicit release events can omit the timeout.
+
+## Speech bubbles
+
+New pets include the enabled `chatter` module. A community speech pack can supply a `kind: "speech"` manifest with API version 1, its own ID, name and version, a `lines` array, and integer `minSeconds`, `maxSeconds` and `durationSeconds`. Use the built-in runtime/chatter.json as a working example. Install and toggle these packs through the existing plugin manager. The host selects one enabled pack per bubble, displays plain text, and pauses speech while the pet is hidden or a session notice is visible. Speech packs use local text and timing only.

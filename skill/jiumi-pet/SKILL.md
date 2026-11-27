@@ -7,7 +7,10 @@ description: Create a desktop pet locally from a preset or your PNG. Preview, pe
 
 Use the user's description to deliver a ready-to-play character. Default to the sugar-cube chick; for a named animal use its preset (e.g. `--animal pig`). Set `--color` only when requested. Ordinary creations use pre-aligned moving parts. Skip technical choices and joint setup.
 
-Run `python3 pet.py create "NAME" --output "DIRECTORY"`. Deliver the HTML preview and, on macOS, the matching app. Double-click the app for the floating pet; use the paw menu to hide, show or adjust it. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
+Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Deliver the HTML preview and, on macOS, the matching app. Double-click the app for the floating pet; use the Jiumi menu-bar icon to hide, show or adjust it. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
+
+Pass `--language` to match the language of the creation request: `en` for English or `zh-CN` for Chinese. Honor an explicitly requested interface language first. Determine this from the request itself, independently of the pet name or the language of this guide. The user can change it later in Settings → App & System → Interface language.
+
 
 Load [articulation](references/articulation.md) only when the brief needs independently articulated humanoid limbs, custom part art or a special frame performance. Infer needs from the requested actions. Ask only about a material creative choice the description leaves open.
 
@@ -17,6 +20,12 @@ For a community installation on an existing pet, use the fixed ID and version fr
 
 The macOS v1 host includes an interaction-first context menu, a management menu in the menu bar, window preferences and an optional per-pet global visibility shortcut. Keep the pet UUID when rebuilding to retain its device settings.
 
-Enable mouse pass-through in desktop settings and turn it off from the paw menu. By default the pet stays out of native full-screen Spaces and returns when leaving them unless manually hidden.
+Toggle mouse pass-through in desktop settings, accessible from the Jiumi menu-bar icon. By default the pet stays out of native full-screen Spaces and returns when leaving them unless manually hidden.
 
 In Desktop Settings, macOS 13+ app bundles can opt into Open at Login. Plugins & Interaction Menu shows installed versions, enables and disables plugins live, and edits the order, visibility and names of interaction commands. Export the character package to carry the enabled selection.
+
+## Client identity
+
+Use Jiumi as the default client name for the application bundle, system display name, permission requests, login item and settings window. Keep the pet name in character data and its label. Override the client name only when the user explicitly requests a client name.
+
+For desktop creation, interaction plugins or changes to settings and menus, follow the [desktop client standards](references/desktop-client.md).

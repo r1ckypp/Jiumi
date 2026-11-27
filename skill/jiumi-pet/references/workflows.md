@@ -12,7 +12,7 @@ python3 pet.py local
 python3 pet.py preview PET_ID
 ```
 
-On macOS, run `python3 pet.py open PET_ID` to launch the floating pet. Use the paw menu for visibility and settings. Run `python3 pet.py desktop-app PET_ID OUTPUT_DIRECTORY` to deliver a standalone app.
+On macOS, run `python3 pet.py open PET_ID` to launch the floating pet. Use the Jiumi menu-bar icon for visibility and settings. Run `python3 pet.py desktop-app PET_ID OUTPUT_DIRECTORY` to deliver a standalone app.
 
 ## Motions and plugins
 

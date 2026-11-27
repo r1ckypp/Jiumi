@@ -1,6 +1,7 @@
 """Launch the packaged native host with no scripting runtimes on its search path."""
 import json
 import os
+import plistlib
 from pathlib import Path
 import subprocess
 import sys
@@ -11,13 +12,17 @@ with tempfile.TemporaryDirectory() as tmp:
     os.environ["PET_HOME"]=tmp
     sys.path.insert(0,"skill/jiumi-pet")
     import pet
-    role=pet.create("泡泡","#ffcf67")
+    role=pet.create("泡泡","#ffcf67",language="en")
     pid=role["id"]
     data=pet.read(pid)
     module=json.loads(Path("examples/modules/focus-timer.json").read_text())
     data.update(modules=[module],plugins=[module["id"]])
     pet.store(data)
     app=Path(pet.desktop_app(pid,tmp))
+    info=plistlib.loads((app/"Contents/Info.plist").read_bytes())
+    assert data["defaultLanguage"]==info["JiumiDefaultLanguage"]=="en"
+    assert app.name=="Jiumi.app" and info["CFBundleName"]==info["CFBundleDisplayName"]=="Jiumi"
+    assert info["CFBundleIdentifier"]=="studio.jiumi.pet."+pid and pet.read(pid)["name"]=="泡泡"
     subprocess.run(["codesign","--verify",str(app)],check=True)
     binary=app/"Contents/MacOS/Jiumi"
     process=subprocess.Popen([str(binary)],stdin=subprocess.PIPE,text=True,env={**os.environ,"PATH":"/nonexistent"})

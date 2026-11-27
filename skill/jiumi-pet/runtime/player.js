@@ -121,11 +121,12 @@ function createFeedback({body, effect, stateChanged=()=>{}, interactionChanged=(
   }
   base();
   return {configure(list,rules){reactions=combine(rules);machine.replace(list);},dispatch,play,setVisible,disconnect,tick:()=>expire(clock()),getState:()=>state,getInteraction:()=>interaction,getBodyIntent:()=>interactionMotion??state,
-    dispose(){disposed=true;++version;sessions.clear();seen.clear();body('silent',null)}};
+    dispose(){disposed=true;++version;machine.clear();sessions.clear();seen.clear();body('silent',null)}};
 }
 
 function animatePet(button,picture,pet,catalog){
-  let animation, breaths=0, turn=0;
+  let animation, idleTimer, idleRange=[8,20];
+  let resting=false;
   const lastSelection=new Map();
   let frameTimer, framePicture;
   function stopFrames(){
@@ -137,7 +138,14 @@ function animatePet(button,picture,pet,catalog){
   const routine=['peek','walk','nap'];
   const mapping={affection:'pet',attention:'peek',celebrate:'hop',waiting:'expect',working:'focus',idle:'idle'};
   picture.style.transformOrigin='50% 85%';
-  function body(intent,done){
+  function scheduleIdleAction(){
+    clearTimeout(idleTimer);
+    const [min,max]=idleRange;
+    idleTimer=setTimeout(()=>body('idle',null,'action'),1000*(min+Math.random()*(max-min)));
+  }
+  function body(intent,done,phase='start'){
+    if(phase!=='repeat')clearTimeout(idleTimer);
+    resting=false;
     if(animation){animation.onfinish=null;animation.cancel();animation=null}
     stopFrames();
     picture.stopPose?.();
@@ -147,15 +155,25 @@ function animatePet(button,picture,pet,catalog){
     const authored=pet.rig?.poses??{};
     const known=key=>typeof key==='string' && (Object.hasOwn(petMotions,key)||Object.hasOwn(pet.clips??{},key)||Object.hasOwn(authored,key));
     const pool=Object.hasOwn(pet.motionPools??{},intent)?pet.motionPools[intent].filter(known):[];
-    const choices=pool.length>1?pool.filter(key=>key!==lastSelection.get(intent)):pool;
+    const automaticIdle=intent==='idle' && !done && !known(override);
+    const variety=pool.length?pool.filter(name=>name!=='idle'):(pet.clips?.idle?[]:routine);
+    const paced=automaticIdle && variety.length>0;
     let name=known(override)?override:mapping[intent]||intent;
-    if(Object.hasOwn(pet.clips??{},intent) && !known(override))name=intent;
-    else if(choices.length && !known(override)){
-      name=choices[Math.floor(Math.random()*choices.length)];
+    const choices=paced?(phase==='action'?variety:[]):pool;
+    if(choices.length && !known(override)){
+      const options=choices.length>1?choices.filter(key=>key!==lastSelection.get(intent)):choices;
+      name=options[Math.floor(Math.random()*options.length)];
       lastSelection.set(intent,name);
-    }
+    }else if(Object.hasOwn(pet.clips??{},intent) && !known(override))name=intent;
     if(!known(name))name='idle';
-    if(!pool.length && !known(override) && !pet.clips?.idle && intent==='idle' && !done && ++breaths%5===0)name=routine[turn++%routine.length];
+    resting=paced && phase!=='action';
+    if(resting && phase!=='repeat' && !matchMedia('(prefers-reduced-motion: reduce)').matches)scheduleIdleAction();
+    function next(){
+      if(done){done();return}
+      engine.tick();
+      if(engine.getBodyIntent()===intent && button.dataset.motion===name)
+        body(intent,null,resting?'repeat':'start');
+    }
     button.dataset.motion=name;
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){if(done)queueMicrotask(done);return}
     const clip=pet.clips?.[name];
@@ -169,6 +187,7 @@ function animatePet(button,picture,pet,catalog){
         if(index>0 && !picture.isConnected){stopFrames();return}
         if(index===clip.frames.length){
           if(done){done();return}
+          if(paced){next();return}
           if(pool.length && !known(override)){
             const previous=framePicture;
             engine.tick();
@@ -196,7 +215,7 @@ function animatePet(button,picture,pet,catalog){
     animation=picture.animate(poses.map(transform=>({transform})),{duration,easing:'ease-in-out'});
     animation.onfinish=()=>{
       if(!picture.isConnected)return;
-      if(done)done();else{engine.tick();if(engine.getBodyIntent()===intent)body(intent,null)}
+      next();
     };
   }
   function effect(rule){
@@ -210,6 +229,12 @@ function animatePet(button,picture,pet,catalog){
   }
   const engine=createFeedback({body,effect,machines:petMachines(pet),interactionChanged:value=>{button.dataset.interaction=value},rules:catalog.filter(r=>pet.plugins.includes(r.id)),
     stateChanged:state=>{button.dataset.state=state;button.setAttribute('aria-label',ui('摸摸')+pet.name+' · '+ui({idle:'待机',working:'工作中',waiting:'等待确认'}[state]))}});
+  engine.setIdleInterval=(min,max)=>{
+    if(!Number.isInteger(min)||!Number.isInteger(max)||min<1||max>120||min>max)return false;
+    idleRange=[min,max];
+    if(resting && !matchMedia('(prefers-reduced-motion: reduce)').matches)scheduleIdleAction();
+    return true;
+  };
   button.dataset.state='idle';button.dataset.interaction='free';
   return engine;
 }
@@ -324,6 +349,47 @@ function attachPetMenu(stage,pet,nativeMenu){
   feedback.dispose=()=>{select.remove();dispose();};
 }
 
+// Hosts report timing only. The character's state machine chooses the pose.
+function attachTypingInput(motion, pet, native) {
+  const subscribed = () => petMachines(pet).some(module => Object.hasOwn(module.enter, 'typing.stroke'));
+  const listeners = new AbortController();
+  const options = {signal:listeners.signal};
+  let timer, sequence = 0, lastKey = -Infinity;
+  function report(type) {
+    motion.dispatch({v:1, id:String(++sequence), source:'typing', type, at:Date.now()});
+  }
+  function stop() {
+    if (timer === undefined) return;
+    clearTimeout(timer);
+    timer = undefined;
+    report('typing.stop');
+  }
+  function stroke() {
+    if (document.hidden || !subscribed()) return;
+    clearTimeout(timer);
+    report('typing.stroke');
+    timer = setTimeout(stop, 190);
+  }
+  motion.typingStroke = stroke;
+  if (!native) {
+    window.addEventListener('keydown', event => {
+      if (event.target.closest?.('button,select,summary') || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (event.key.length !== 1 && !['Enter','Backspace','Delete','Process','Unidentified'].includes(event.key)) return;
+      lastKey = performance.now();
+      if (!event.repeat) stroke();
+    }, options);
+    window.addEventListener('beforeinput', event => {
+      if (!['insertText','insertCompositionText','insertLineBreak','deleteContentBackward','deleteContentForward'].includes(event.inputType)) return;
+      if (performance.now() - lastKey > 70) stroke();
+      lastKey = -Infinity;
+    }, options);
+    window.addEventListener('blur', stop, options);
+  }
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); }, options);
+  const dispose = motion.dispose;
+  motion.dispose = () => { stop(); listeners.abort(); dispose(); };
+}
+
 function mountPet(button, pet, catalog, host) {
   button.feedback?.dispose();
   button.replaceChildren();
@@ -368,6 +434,8 @@ function mountPet(button, pet, catalog, host) {
       modules.setVisible(value);
     };
   }
+  if ((pet.modules??[]).some(m => m.kind==='state-machine' && Object.hasOwn(m.enter,'typing.stroke')))
+    attachTypingInput(motion,pet,host?.nativeMenu);
   button.feedback=motion;
   if(document.hidden)motion.setVisible(false);
   let count=0;
@@ -380,15 +448,17 @@ function mountPet(button, pet, catalog, host) {
     motion.dispatch({v:1,id:String(count),source:'pointer',type:'pet.tap',at:Date.now()});
     button.dispatchEvent(new CustomEvent('pet.tap',{detail:{count}}));
   };
+  attachSpeech(button,pet,host);
   attachSessionNotices(button,pet,host);
   attachPetMenu(button,pet,host?.nativeMenu);
-  if(host?.nativeMenu)motion.setPlugin=(id,enabled)=>{
+  motion.setPlugin=(id,enabled)=>{
     if(![...catalog,...(pet.modules??[])].some(m=>m.id===id))return false;
     pet.plugins=pet.plugins.filter(key=>key!==id);
     if(enabled)pet.plugins.push(id);
     motion.configure(petMachines(pet),catalog.filter(m=>pet.plugins.includes(m.id)));
     motion.syncWorkers?.();
     motion.syncNotices?.();
+    motion.syncSpeech?.();
     motion.menuItems=petMenuItems(pet);
     return true;
   };

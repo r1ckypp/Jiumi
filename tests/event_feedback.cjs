@@ -52,3 +52,26 @@ emit('pet.grab');emit('room.loud');emit('pet.release');onEnd();assert.equal(disp
 rest.states.dozing.resumeAt='$discard';
 emit('room.quiet');emit('pet.grab');emit('pet.release');onEnd();assert.equal(displayed,'waiting');
 console.log('PASS plugin-defined states, explicit resume target, self, discard and suspended exit');
+
+const timers = new Map();
+let timerId = 0, elapsed = 0;
+const timedMake = vm.runInNewContext(['machines.js','player.js'].map(f=>fs.readFileSync(runtime+f,'utf8')).join('\n')+';createFeedback',{
+  defaultPickup:pickup,
+  setTimeout(fn,ms){timers.set(++timerId,{at:elapsed+ms,fn});return timerId},
+  clearTimeout(id){timers.delete(id)}
+});
+function advance(ms){
+  elapsed+=ms;
+  for(const [id,t] of timers)if(t.at<=elapsed){timers.delete(id);t.fn();}
+}
+const typing=JSON.parse(fs.readFileSync('examples/modules/typing.json'));
+const timed=timedMake({machines:[typing,pickup],body(){},effect(){},clock:()=>elapsed});
+function input(type){timed.dispatch({v:1,id:String(++id),source:'test',type,at:elapsed});}
+input('typing.stroke');advance(4500);input('typing.stroke');advance(4999);
+assert.equal(timed.getInteraction(),'right');advance(1);
+assert.equal(timed.getBodyIntent(),'idle');
+typing.states.left.resumeAt='$self';
+input('typing.stroke');input('pet.grab');advance(5000);
+assert.equal(timed.getInteraction(),'held');input('pet.cancel');assert.equal(timed.getInteraction(),'free');
+input('typing.stroke');timed.dispose();assert.equal(timers.size,0);
+console.log('PASS renewable inactivity timeout, suspended expiration and disposal');

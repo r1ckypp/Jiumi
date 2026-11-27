@@ -25,6 +25,7 @@ function attachSessionNotices(stage,pet,host){
     const item=pending();
     panel.replaceChildren();
     panel.hidden=!item;
+    stage.feedback.setSpeechBlocked?.(Boolean(item));
     host?.layout?.(Boolean(item));
     if(!item)return;
     const title=document.createElement('strong');

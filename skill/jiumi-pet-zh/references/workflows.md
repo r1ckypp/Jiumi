@@ -12,7 +12,7 @@ python3 pet.py local
 python3 pet.py preview PET_ID
 ```
 
-要启动 macOS 悬浮窗，运行 `python3 pet.py open PET_ID`。用菜单栏爪印管理显隐与设置。要交付独立应用，运行 `python3 pet.py desktop-app PET_ID OUTPUT_DIRECTORY`。
+要启动 macOS 悬浮窗，运行 `python3 pet.py open PET_ID`。用菜单栏小鸡图标管理显隐与设置。要交付独立应用，运行 `python3 pet.py desktop-app PET_ID OUTPUT_DIRECTORY`。
 
 ## 动作与插件
 

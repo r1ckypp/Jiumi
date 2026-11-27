@@ -7,12 +7,13 @@ RUNTIME = Path(__file__).resolve().parent / "runtime"
 
 
 def player_source(kinds=("sugar","humanoid")):
-    files=["language.js","machines.js","notices.js","plugin-host.js"]
+    files=["language.js","machines.js","notices.js","speech.js","plugin-host.js"]
     if kinds:
         files.append("rig-player.js")
         files.extend(kind+".js" for kind in ("sugar","humanoid") if kind in kinds)
     files.append("player.js")
     default = "const defaultPickup=" + (RUNTIME/"pickup.json").read_text() + ";"
+    default += "\nconst defaultSpeech=" + (RUNTIME/"chatter.json").read_text() + ";"
     return "\n".join([default, *((RUNTIME / file).read_text() for file in files)])
 
 

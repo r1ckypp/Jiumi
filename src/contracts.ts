@@ -17,6 +17,7 @@ interface PetRig {
 }
 
 interface PetPackage {
+  defaultLanguage?:"en"|"zh-CN";
   rig?:PetRig;
   id: string;
   name: string;
@@ -51,7 +52,8 @@ interface PetRule {
   intent?: 'attention' | 'affection' | 'celebrate';
 }
 
-type PetModule = WasmModule | StateMachineModule | SessionNoticeModule;
+interface SpeechModule { kind:"speech"; api:1; id:string; version:number; name:string; lines:string[]; minSeconds:number; maxSeconds:number; durationSeconds:number }
+type PetModule = SpeechModule | WasmModule | StateMachineModule | SessionNoticeModule;
 
 interface SessionNoticeModule {
   kind:"session-notice";
@@ -74,7 +76,7 @@ interface StateMachineModule {
   priority:number;
   menu?:Record<string,string>;
   enter:Record<string,string>;
-  states:Record<string,{motion:string;on?:Record<string,string>;after?:string;resumeAt?:string}>;
+  states:Record<string,{motion:string;on?:Record<string,string>;after?:string;resumeAt?:string;timeoutMs?:number}>;
 }
 
 interface WasmModule {

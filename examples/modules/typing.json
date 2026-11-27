@@ -1,0 +1,15 @@
+{
+  "id": "typing", "kind": "state-machine", "api": 1, "version": 2,
+  "name": "陪打字", "priority": 10,
+  "enter": {"typing.stroke": "left"},
+  "states": {
+    "left": {
+      "motion": "type-left", "resumeAt": "$discard", "timeoutMs": 5000,
+      "on": {"typing.stroke": "right"}
+    },
+    "right": {
+      "motion": "type-right", "resumeAt": "$discard", "timeoutMs": 5000,
+      "on": {"typing.stroke": "left"}
+    }
+  }
+}

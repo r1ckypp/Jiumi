@@ -6,7 +6,7 @@ import re
 
 SUGAR_COLORS={"chick":"#fac763","pig":"#99d3ec","cat":"#edb278","cow":"#f4ecdc","bunny":"#ecd6d5","elephant":"#adbbd8"}
 
-PORTABLE_FIELDS = ("rig", "clips", "motionPools", "modules", "moduleState")
+PORTABLE_FIELDS = ("defaultLanguage", "rig", "clips", "motionPools", "modules", "moduleState")
 
 
 def check(ok, message):
@@ -41,6 +41,9 @@ def validate_machine(m):
     for state in states.values():
         check(valid_id(state.get("motion")),"动作名无效")
         routes(state.get("on",{}),exits)
+        if "timeoutMs" in state:
+            duration=state["timeoutMs"]
+            check(type(duration) is int and 1<=duration<=2147483647,"状态超时时间无效")
         resume=state.get("resumeAt","$self")
         check(isinstance(resume,str) and resume in names|{"$self","$discard"},"恢复目标无效")
         if "after" in state:
@@ -60,6 +63,12 @@ def validate_module(module):
     check(isinstance(module,dict) and valid_id(module.get("id")), "插件 ID 无效")
     check(module.get("api")==1 and type(module.get("version")) is int and 0<module["version"]<2**53, "插件版本无效")
     check(isinstance(module.get("name"),str) and 0<len(module["name"])<=80, "插件名称无效")
+    if module.get("kind")=="speech":
+        lines=module.get("lines")
+        check(isinstance(lines,list) and 1<=len(lines)<=100 and all(isinstance(s,str) and s.strip() and len(s)<=48 for s in lines),"气泡台词无效")
+        low,high,duration=(module.get(k) for k in ("minSeconds","maxSeconds","durationSeconds"))
+        check(all(type(n) is int for n in (low,high,duration)) and 1<=low<=high<=3600 and 1<=duration<=30,"气泡间隔无效")
+        return
     if module.get("kind")=="session-notice":
         def label(s,limit):
             return isinstance(s,str) and bool(s.strip()) and len(s)<=limit
@@ -81,6 +90,7 @@ def validate_module(module):
 
 
 def validate_portable(pet):
+    check(pet.get("defaultLanguage","zh-CN") in ("en","zh-CN"),"不支持的客户端语言")
     if "rig" in pet:
         rig=pet["rig"]
         check(isinstance(rig,dict) and rig.get("kind") in ("sugar","humanoid"),"角色模板无效")

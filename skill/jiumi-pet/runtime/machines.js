@@ -26,6 +26,7 @@ function validateMachine(m){
   }
   for(const s of Object.values(m.states)){
     if(!record(s)||!key(s.motion))fail();
+    if(s.timeoutMs!==undefined && (!Number.isSafeInteger(s.timeoutMs)||s.timeoutMs<1||s.timeoutMs>2147483647))fail();
     if(s.on!==undefined)routes(s.on,exit);
     if(s.resumeAt!==undefined && !local(s.resumeAt) && !['$self','$discard'].includes(s.resumeAt))fail();
     if(s.after!==undefined && !exit(s.after))fail();
@@ -45,18 +46,39 @@ function interactionMachine(modules,render){
   const paused=[];
   let current=null;
   const route=(map,event)=>map && Object.hasOwn(map,event)?map[event]:undefined;
+  function cancel(frame){
+    if(frame?.timer!==undefined)clearTimeout(frame.timer);
+  }
+  function discardPaused(from){
+    paused.splice(from).forEach(cancel);
+  }
+  function frameFor(module,key){
+    const frame={module,key};
+    const duration=module.states[key].timeoutMs;
+    if(duration!==undefined){
+      frame.timer=setTimeout(()=>{
+        if(current===frame)move(module,'$resume');
+        else {
+          const index=paused.indexOf(frame);
+          if(index>=0)paused.splice(index,1);
+        }
+      },duration);
+    }
+    return frame;
+  }
   function move(module,target){
-    if(target==='$base')paused.length=0;
-    current=target==='$base'||target==='$resume'?paused.pop()??null:{module,key:target};
+    cancel(current);
+    if(target==='$base')discardPaused(0);
+    current=target==='$base'||target==='$resume'?paused.pop()??null:frameFor(module,target);
     render(current);
   }
   function dispatch(event){
     // Keep interrupted states up to date (e.g. releasing a suspended grab).
     for(let i=paused.length-1;i>=0;i--){
       const frame=paused[i],target=route(frame.module.states[frame.key].on,event);
-      if(target==='$base')paused.splice(0,i+1);
-      else if(target==='$resume')paused.splice(i,1);
-      else if(target)frame.key=target;
+      if(target==='$base')paused.splice(0,i+1).forEach(cancel);
+      else if(target==='$resume')paused.splice(i,1).forEach(cancel);
+      else if(target){cancel(frame);paused[i]=frameFor(frame.module,target);}
       if(target==='$base')break;
     }
     if(current){
@@ -67,16 +89,17 @@ function interactionMachine(modules,render){
     if(!owner)return;
     if(current){
       const resume=current.module.states[current.key].resumeAt??'$self';
-      if(resume!=='$discard')paused.push({module:current.module,key:resume==='$self'?current.key:resume});
+      if(resume==='$self'){paused.push(current);current=null;}
+      else if(resume!=='$discard')paused.push(frameFor(current.module,resume));
     }
     move(owner,owner.enter[event]);
   }
   function replace(list){
     ordered=sort(list);
-    for(let i=paused.length-1;i>=0;i--)if(!ordered.includes(paused[i].module))paused.splice(i,1);
+    for(let i=paused.length-1;i>=0;i--)if(!ordered.includes(paused[i].module))paused.splice(i,1).forEach(cancel);
     if(current && !ordered.includes(current.module))move(current.module,'$resume');
   }
-  return {dispatch,move,replace,clear(){paused.length=0;current=null;}};
+  return {dispatch,move,replace,clear(){discardPaused(0);cancel(current);current=null;}};
 }
 
 function petMachines(pet){

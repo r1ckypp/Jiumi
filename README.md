@@ -15,7 +15,7 @@ Make me a blue jiumi named Bubble.
 
 ## Why Jiumi?
 
-Developers package software. Users download and install it. With AI, you can describe the desktop pet you want and have your own agent build it on your computer.
+In the past, if you wanted a desktop pet, you had to download and install one that someone else had built. Now anyone can use AI to build their own desktop pet on their own computer.
 
 Jiumi provides a lightweight, modular framework you can extend. Draw the artwork yourself or generate it with AI. You decide how your pet looks, how it moves, and when it responds to you.
 
@@ -59,6 +59,7 @@ Try the bundled focus timer. Expand the local plugins section in the maker and i
 
 - **Create and keep a pet locally.** Describe a character to an agent or open the bilingual maker with your own PNG. Export a playable HTML file and an editable package that preserves the pet’s ID, artwork and plugin choices. On macOS, the Skill can also build a floating app with menu bar controls. [Local runtime](docs/spec/offline-pet.md)
 - **Reuse the same interactions across characters.** Sugar-cube pets use pre-aligned parts, while articulated humanoids use a skeleton. A PNG sequence can override a single motion. Both renderers use the same pickup and landing plugin. [Character rendering](docs/spec/character-rendering.md) · [Plugin SDK](docs/spec/plugin-sdk.md)
+- **Add interactions to the pet menu.** Import the [feed plugin](examples/modules/feed.json) and add an `eat` clip to each character. Select the command in the HTML player or the macOS pet menu.
 - **Respond to tools through local plugins.** Plugins can define when a pet enters, leaves or resumes a state. An opt-in Claude Code CLI hook on macOS can trigger a confirmation notice that stays visible while the pet is dragged. Clicking it can reopen the session when the host has a local binding. [Events](docs/spec/event-feedback.md) · [Host capabilities](docs/spec/host-capabilities.md)
 
 ### Planned
@@ -69,7 +70,7 @@ Try the bundled focus timer. Expand the local plugins section in the maker and i
 
 ### Under consideration
 
-- Let plugins request menu items, sound or system notifications when the host supports them. Optional network access would require explicit, revocable permission and would keep local pets usable without a connection. [Host capabilities](docs/spec/host-capabilities.md) · [Plugin distribution](docs/spec/offline-pet.md)
+- Let plugins request sound or system notifications when the host supports them. Optional network access would require explicit, revocable permission and would keep local pets usable without a connection. [Host capabilities](docs/spec/host-capabilities.md) · [Plugin distribution](docs/spec/offline-pet.md)
 
 ## Desktop agent support matrix
 

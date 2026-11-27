@@ -46,7 +46,7 @@ def build_skill(skill_name):
             package.write(path, f"{skill_name}/references/{path.name}")
         for path in sorted([*source.glob("*.py"), *(source / "runtime").glob("*")]):
             package.write(path, f"{skill_name}/{path.relative_to(source)}")
-        for path in [root / "examples/modules/focus-timer.json", source / "runtime/pickup.json",
+        for path in [root / "examples/modules/focus-timer.json", source / "runtime/pickup.json", root / "examples/modules/typing.json",
                      root / "examples/modules/feed.json", root / "examples/modules/agent-confirm.json", root / "examples/plugins/tap-confetti.json"]:
             package.write(path, f"{skill_name}/examples/{path.name}")
         package.write(maker, f"{skill_name}/maker.html")
@@ -55,12 +55,11 @@ def build_skill(skill_name):
         if skill_name == "jiumi-pet-zh":
             translation = (root / "docs/zh-CN/LICENSE.zh-CN.md").read_text().replace("](../../LICENSE)", "](LICENSE)")
             package.writestr(f"{skill_name}/LICENSE.zh-CN.md", translation)
-        else:
-            for original, packaged in [("event-feedback.md", "EVENT-SPEC.md"),
+        for original, packaged in [("event-feedback.md", "EVENT-SPEC.md"),
                                        ("plugin-sdk.md", "STATE-MACHINES.md"),
                                        ("host-capabilities.md", "host-capabilities.md")]:
-                spec = (root / "docs/spec" / original).read_text().replace("](plugin-sdk.md)", "](STATE-MACHINES.md)")
-                package.writestr(f"{skill_name}/{packaged}", spec)
+            spec = (root / "docs/spec" / original).read_text().replace("](plugin-sdk.md)", "](STATE-MACHINES.md)")
+            package.writestr(f"{skill_name}/{packaged}", spec)
         if args.official_assets:
             for image in sorted(args.official_assets.glob("*.png")):
                 package.write(image, f"{skill_name}/animals/{image.name}")

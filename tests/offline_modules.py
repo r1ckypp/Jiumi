@@ -13,27 +13,28 @@ with sync_playwright() as pw, tempfile.TemporaryDirectory() as temp:
     page.select_option("#language", "zh-CN")
     page.locator("#module-panel summary").click()
     page.set_input_files("#module-file",manifest)
-    page.wait_for_function("document.querySelector('#module-list input')?.checked")
+    page.wait_for_function("document.querySelector('[data-module-id=focus-timer] input')?.checked")
+    timer_toggle=page.locator('[data-module-id="focus-timer"] input')
     def start():
         page.evaluate("""()=>stage.feedback.dispatch({v:1,id:crypto.randomUUID(),source:'fixture',type:'agent.started',session:'fixture',at:Date.now()})""")
     start()
     page.wait_for_function("current().moduleState['focus-timer']>Date.now()")
     deadline=page.evaluate("current().moduleState['focus-timer']")
-    page.locator("#module-list input").uncheck()
-    page.locator("#module-list input").check()
+    timer_toggle.uncheck()
+    timer_toggle.check()
     assert page.evaluate("current().moduleState['focus-timer']")==deadline
     bad=json.loads(manifest.read_text())
     bad["capabilities"].append("network")
     page.set_input_files("#module-file",{"name":"bad.json","mimeType":"application/json","buffer":json.dumps(bad).encode()})
     page.wait_for_function("document.querySelector('#module-status').textContent.includes('不兼容')")
-    assert page.locator("#module-list input").is_checked()
+    assert timer_toggle.is_checked()
     # Simulate a worker that starts but cannot answer during an update.
     page.evaluate("()=>{window.HealthyWorker=window.Worker;window.Worker=class {postMessage(){} terminate(){}}}")
     updated=json.loads(manifest.read_text())
     updated["version"]+=1
     page.set_input_files("#module-file",{"name":"update.json","mimeType":"application/json","buffer":json.dumps(updated).encode()})
     page.wait_for_function("document.querySelector('#module-status').textContent.includes('超时')")
-    assert page.evaluate("current().modules[0].version")==1
+    assert page.evaluate("current().modules.find(m=>m.id==='focus-timer').version")==1
     page.evaluate("()=>{window.Worker=window.HealthyWorker}")
     with page.expect_download() as result:
         page.click("#confirm")
@@ -53,9 +54,9 @@ with sync_playwright() as pw, tempfile.TemporaryDirectory() as temp:
     page.goto(Path("dist/maker.html").resolve().as_uri())
     page.locator("#module-panel summary").click()
     page.set_input_files("#module-file",manifest)
-    page.get_by_role("button",name="移除",exact=True).click()
+    page.locator('[data-module-id="focus-timer"]').get_by_role("button",name="移除",exact=True).click()
     start()
-    assert page.evaluate("current().plugins.length===0 && current().modules.length===0")
+    assert page.evaluate("current().plugins.includes('chatter') && !current().modules.some(m=>m.id==='focus-timer')")
     print("PASS offline module installation, denied capability, state, wake, single settlement, export and removal")
     # A new graph can be imported, interrupted by pickup and restored after export.
     graph={"kind":"state-machine","api":1,"version":1,"id":"quiet","name":"Quiet","priority":10,
@@ -83,9 +84,9 @@ with sync_playwright() as pw, tempfile.TemporaryDirectory() as temp:
     menu.select_option("menu.feed.bite")
     state("eating")
     state("free")
-    page.locator("#module-list input").uncheck()
+    page.locator('[data-module-id=feed] input').uncheck()
     assert menu.count()==0
-    page.locator("#module-list input").check()
+    page.locator('[data-module-id=feed] input').check()
     with page.expect_download() as result:
         page.click("#confirm")
     result.value.save_as(path)

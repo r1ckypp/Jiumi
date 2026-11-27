@@ -40,7 +40,7 @@ function sugarPreset(species) {
     return { rig: { kind: 'sugar', species }, color: colors[species] ?? colors.chick };
 }
 function newPet(presets) {
-    return { id: crypto.randomUUID(), name: ui('啾咪'), ...sugarPreset(Object.keys(presets)[0]), image: Object.values(presets)[0].image, plugins: [], revision: 0 };
+    return { id: crypto.randomUUID(), name: ui('啾咪'), ...sugarPreset(Object.keys(presets)[0]), image: Object.values(presets)[0].image, modules: [structuredClone(defaultSpeech)], plugins: [defaultSpeech.id], revision: 0 };
 }
 function setupMaker(presets, pet, update) {
     const name = document.querySelector('#pet-name');
@@ -191,6 +191,7 @@ function modulePanel(read, write) {
         list.replaceChildren();
         for (const mod of read().modules ?? []) {
             const item = document.createElement('div');
+            item.dataset.moduleId = mod.id;
             const label = document.createElement('label');
             const toggle = document.createElement('input');
             toggle.type = 'checkbox';
@@ -201,7 +202,7 @@ function modulePanel(read, write) {
                     plugins.push(mod.id);
                 write({ plugins });
             };
-            label.append(toggle, mod.name + ' v' + mod.version);
+            label.append(toggle, ui(mod.name) + ' v' + mod.version);
             const remove = document.createElement('button');
             remove.textContent = ui('移除');
             remove.onclick = () => {

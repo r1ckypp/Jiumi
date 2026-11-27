@@ -82,7 +82,7 @@ def read(pid):
     return pet
 
 
-def create(name,color=None,image=None,animal=None,modules=None,character=None,layers=None):
+def create(name,color=None,image=None,animal=None,modules=None,character=None,layers=None,language="zh-CN"):
     rig=None
     if not image:
         rig={"kind":"humanoid","style":character,"poses":json.loads((ROOT/"runtime/knight-poses.json").read_text())} if character in ("knight","humanoid") else {"kind":"sugar","species":animal or "chick"}
@@ -97,11 +97,14 @@ def create(name,color=None,image=None,animal=None,modules=None,character=None,la
         if not raw.startswith(b"\x89PNG\r\n\x1a\n") or len(raw)>3000000:
             raise ValueError("请提供 3 MB 以内的 PNG")
         art="data:image/png;base64,"+base64.b64encode(raw).decode()
-    role=dict(id=str(uuid.uuid4()),name=name.strip(),color=color,image=art,plugins=[],revision=0)
+    role=dict(id=str(uuid.uuid4()),name=name.strip(),color=color,image=art,defaultLanguage=language,plugins=[],revision=0)
     if layers:
         if not rig:raise ValueError("分件素材需要角色模板")
         rig["layers"]=layers
     if rig:role["rig"]=rig
+    modules=list(modules or [])
+    if len(modules)<8 and not any(m.get("id")=="chatter" for m in modules):
+        modules.append(json.loads((ROOT/"runtime/chatter.json").read_text()))
     if modules:
         role["modules"]=modules
         role["plugins"]=[m["id"] for m in modules]
@@ -224,9 +227,10 @@ def window_page(pid):
     rules=json.loads((base/"catalog.json").read_text()) if (base/"catalog.json").exists() else []
     payload=json.dumps([pet,rules]).replace("<","\\u003c")
     html="""<!doctype html><meta charset=utf-8><style>*{box-sizing:border-box}body{margin:0;background:transparent;text-align:center;font:13px system-ui}button{width:145px;height:140px;background:transparent;border:0;position:relative;cursor:pointer}footer{display:inline-block;background:#fff8e8;color:#47392c;border-radius:10px;padding:2px 10px;user-select:none}footer[hidden]{display:none}body{position:absolute;bottom:0;width:100%;height:170px}body>aside{position:absolute!important;bottom:100%;width:100%!important}</style><button id="stage" title="轻点抚摸，长按拖动"></button><br><footer id="label" hidden></footer><script>"""
+    html=html.replace("<!doctype html>","<!doctype html><html lang=\""+("en" if pet.get("defaultLanguage")=="en" else "zh-CN")+"\">")
     html+=player_source([pet["rig"]["kind"]] if pet.get("rig") else [])+"\nconst [pet,rules]="+payload+";"
     html+="for(const m of [...(pet.modules||[]),...rules]){const flag=window.petPluginOverrides?.[m.id];if(typeof flag==='boolean'){pet.plugins=pet.plugins.filter(id=>id!==m.id);if(flag)pet.plugins.push(m.id)}}"
-    html+="const channel=window.webkit?.messageHandlers?.petSession;const host=channel?{nativeMenu:true,session:(method,target)=>channel.postMessage({method,...target}),layout:show=>channel.postMessage({method:'layout',visible:show?'yes':'no'})}:undefined;mountPet(stage,pet,rules,host);label.textContent=pet.name;stage.addEventListener('pet.tap',e=>label.textContent=pet.name+' · '+e.detail.count);</script>"
+    html+="const channel=window.webkit?.messageHandlers?.petSession;const host=channel?{nativeMenu:true,speechLayout:show=>channel.postMessage({method:'speechLayout',visible:show?'yes':'no'}),session:(method,target)=>channel.postMessage({method,...target}),layout:show=>channel.postMessage({method:'layout',visible:show?'yes':'no'})}:undefined;mountPet(stage,pet,rules,host);label.textContent=pet.name;stage.addEventListener('pet.tap',e=>label.textContent=pet.name+' · '+e.detail.count);</script>"
     page=base/"preview.html"
     write(page,html)
     return page
@@ -244,17 +248,26 @@ def launch(pid,bridge=False):
             out=Path(temp)/"WindowPet"
             subprocess.run(["swiftc",str(src),"-o",str(out)],check=True)
             os.replace(out,binary)
-    process=subprocess.Popen([str(binary),str(page)],start_new_session=True,stdin=subprocess.PIPE if bridge else subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+    process=subprocess.Popen([str(binary),str(page)],env={**os.environ,"JIUMI_DEFAULT_LANGUAGE":read(pid).get("defaultLanguage","zh-CN"),"JIUMI_CLIENT_ICON":str(ROOT/"runtime/Jiumi.icns")},start_new_session=True,stdin=subprocess.PIPE if bridge else subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
     return process if bridge else str(page)
 
 
-def desktop_app(pid, directory):
+def desktop_app(pid, directory, client_name="Jiumi"):
     """Build a portable macOS application with an embedded offline pet."""
     if sys.platform != "darwin":
         raise ValueError("请在 macOS 上构建桌面发行包")
     destination = Path(directory).resolve()
     destination.mkdir(parents=True,exist_ok=True)
-    bundle = destination / ("Jiumi-"+str(uuid.UUID(pid))+".app")
+    pid = str(uuid.UUID(pid))
+    if not client_name.strip() or client_name in (".","..") or any(c in client_name for c in "/:\x00") or len(client_name.encode()) > 240:
+        raise ValueError("客户端名称无效")
+    bundle = destination / (client_name+".app")
+    if bundle.exists():
+        info_path = bundle/"Contents/Info.plist"
+        if info_path.is_file() and plistlib.loads(info_path.read_bytes()).get("CFBundleIdentifier") != "studio.jiumi.pet."+pid:
+            destination = destination/pid
+            destination.mkdir(exist_ok=True)
+            bundle = destination/bundle.name
     if bundle.exists():
         raise ValueError("目标应用已存在，请选择新的输出目录")
     with tempfile.TemporaryDirectory(dir=destination) as temporary:
@@ -265,9 +278,10 @@ def desktop_app(pid, directory):
         resources = contents / "Resources"
         resources.mkdir()
         shutil.copy2(window_page(pid),resources/"pet.html")
+        shutil.copy2(ROOT/"runtime/Jiumi.icns",resources/"Jiumi.icns")
         info = dict(CFBundleExecutable="Jiumi", CFBundleIdentifier="studio.jiumi.pet."+pid,
-                    CFBundleName=read(pid)["name"], CFBundlePackageType="APPL",
-                    CFBundleVersion="1", LSUIElement=True)
+                    CFBundleName=client_name, CFBundleDisplayName=client_name, CFBundleShortVersionString="1.0", CFBundlePackageType="APPL",
+                    JiumiDefaultLanguage=read(pid).get("defaultLanguage","zh-CN"), CFBundleVersion="1", CFBundleIconFile="Jiumi.icns", LSUIElement=True)
         (contents/"Info.plist").write_bytes(plistlib.dumps(info))
         subprocess.run(["swiftc",str(ROOT/"runtime/Sprite.swift"),"-o",str(binary)],check=True)
         subprocess.run(["codesign","--force","--sign","-",str(staged)],check=True)
@@ -282,6 +296,8 @@ def main():
     c.add_argument("--character",choices=["knight","humanoid"])
     c.add_argument("--layers",type=Path,help="可选的关节名与内嵌 PNG 对照 JSON")
     c.add_argument("--module",action="append",type=Path,default=[],help="随角色启用一个本地插件 JSON，可重复")
+    c.add_argument("--language",choices=["en","zh-CN"],default="zh-CN",help="制作请求使用的语言，作为客户端初始语言")
+    c.add_argument("--client-name",default="Jiumi",help="仅在明确指定客户端名称时覆盖默认值")
     c.add_argument("--html-only",action="store_true",help="只交付 HTML 预览")
     c.add_argument("--output",type=Path,help="交付目录，默认为本机角色目录")
     for cmd in ("open","save","restore","preview"):
@@ -290,6 +306,7 @@ def main():
         sub.add_parser(cmd)
     app_builder=sub.add_parser("desktop-app")
     app_builder.add_argument("id"); app_builder.add_argument("directory")
+    app_builder.add_argument("--client-name",default="Jiumi")
     install=sub.add_parser("install-module")
     install.add_argument("id"); install.add_argument("module",type=Path)
     install.add_argument("--module-id",required=True); install.add_argument("--version",type=int,required=True)
@@ -299,7 +316,7 @@ def main():
     importer.add_argument("--extensions")
     a=parser.parse_args()
     if a.cmd=="create":
-        result=create(a.name,a.color,a.image,a.animal,[json.loads(path.read_text()) for path in a.module],a.character,json.loads(a.layers.read_text()) if a.layers else None)
+        result=create(a.name,a.color,a.image,a.animal,[json.loads(path.read_text()) for path in a.module],a.character,json.loads(a.layers.read_text()) if a.layers else None,a.language)
         destination=a.output.resolve() if a.output else folder(result["id"])
         if a.output:
             destination.mkdir(parents=True,exist_ok=True)
@@ -308,12 +325,12 @@ def main():
             result["preview"]=str(html)
         if sys.platform=="darwin" and not a.html_only:
             try:
-                result["desktop_app"]=desktop_app(result["id"],destination)
+                result["desktop_app"]=desktop_app(result["id"],destination,a.client_name)
             except (subprocess.CalledProcessError,OSError,ValueError) as error:
                 result["desktop_error"]=str(error)
                 print(json.dumps(result,ensure_ascii=False))
                 sys.exit(1)
-    elif a.cmd=="desktop-app": result=desktop_app(a.id,a.directory)
+    elif a.cmd=="desktop-app": result=desktop_app(a.id,a.directory,a.client_name)
     elif a.cmd=="install-module":
         result=install_module(a.id,json.loads(a.module.read_text()),a.module_id,a.version,
                               json.loads(a.clips.read_text()) if a.clips else None)

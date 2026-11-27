@@ -72,6 +72,7 @@ async function verifyModule(m){
 
 // Check activation in isolation before committing a replacement to the pet.
 async function checkModuleInstall(module){
+  if(module.kind==='speech'){validateSpeech(module);return;}
   if(module.kind==='session-notice'){validateNotice(module);return;}
   if(module.kind==='state-machine'){validateMachine(module);return;}
   const bytes=await verifyModule(module);
@@ -166,7 +167,7 @@ function startPetModules(button,pet,feedback){
       runner.close();active.delete(id);
     }
     for(const module of (pet.modules||[]).slice(0,8)){
-      if(module.kind!=='state-machine' && module.kind!=='session-notice' && pet.plugins.includes(module.id)&&!active.has(module.id))active.set(module.id,start(module));
+      if(!['state-machine','session-notice','speech'].includes(module.kind) && pet.plugins.includes(module.id)&&!active.has(module.id))active.set(module.id,start(module));
     }
     if(active.size && !tick)tick=setInterval(()=>{if(!button.isConnected){dispose();return;}if(visible && !document.hidden)send('host.tick')},1000);
     if(!active.size){clearInterval(tick);tick=null;}

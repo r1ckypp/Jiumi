@@ -31,10 +31,22 @@ Apply the same capability negotiation to sound and notifications. Exclusive perf
 
 ## macOS desktop host v1
 
-Every native build uses the same AppKit host. The pet context menu starts with enabled plugin actions. The menu-bar item prioritizes visibility and recovery and groups plugin actions under Interactions. Both menus route to the same handlers. Hiding explicitly suspends player feedback. Reopening the app shows the existing panel.
+Every native build uses the same AppKit host. The pet context menu starts with enabled plugin actions. Both menus offer show/hide, settings and quit. The menu-bar item groups visible plugin actions under Interactions. Keep configuration, window recovery and export in settings. Both menus route to the same handlers. Hiding explicitly suspends player feedback. Reopening the app shows the existing panel.
 
 Window size, floating level, opacity, name visibility, remembered position and the optional global visibility shortcut belong to this device and pet identity. The shortcut starts unbound. Register a replacement with the OS before releasing the existing registration. On conflict, leave the previous binding and stored preference intact. Clearing the shortcut releases it. Screen changes constrain the window to a visible display. Resetting window position and resetting preferences are separate commands.
 
-Mouse pass-through is off by default. The menu-bar command remains available when the pet ignores mouse events. Full-screen avoidance is on by default and uses native macOS full-screen Spaces. Space transitions never issue a show command, so manually ordering out the pet also keeps it hidden on return. Both preferences are local to the pet and can be changed in desktop settings.
+Mouse pass-through is off by default. Settings remain accessible from the menu bar when the pet ignores mouse events. Full-screen avoidance is on by default and uses native macOS full-screen Spaces. Space transitions never issue a show command, so manually ordering out the pet also keeps it hidden on return. Both preferences are local to the pet and can be changed in desktop settings.
 
 The bundled macOS 13+ app reads and changes its own login-item registration through SMAppService. Settings report system approval or registration errors. Unbundled previews do not register. The plugin manager shows installed versions and applies enablement changes to the mounted player. Active sessions, notices and unrelated workers survive these edits. Device preferences restore individual plugin overrides before startup; exporting the character records the current enabled IDs. Interaction labels, visibility and ordering remain device preferences. Reset Menu restores the default arrangement without changing plugin enablement. Fixed host recovery commands remain available with every plugin disabled. The host suspends player feedback on workspace sleep and reconciles visibility on wake.
+
+## Client identity
+
+Use Jiumi as the default client name for the application bundle, system display name, permission requests, login item and settings window. Keep the pet name in character data and its label. Override the client name only when the user explicitly requests a client name.
+
+## Settings and interaction defaults
+
+The standard host uses the sugar-cube chick for its app and status item. The creator passes en or zh-CN from the request language into defaultLanguage. Explicit user language choices take precedence. App & System changes the interface live and persists the override per device. Appearance exposes the minimum and maximum idle interval (initially 8 and 20 seconds).
+
+Plugins & Interactions lists every installed module, including disabled modules, in a native table. Center the name and version with the switch and information button and retain trailing padding. Double-clicking a row opens its details without changing enablement.
+
+The built-in chatter module is enabled for new pets. The optional typing module observes host-provided timing, alternates type-left/type-right and renews its five-second timeout on each stroke. Only the user can enable cross-application input in the native host. See [the plugin SDK](plugin-sdk.md) for speech, interruption and recovery.

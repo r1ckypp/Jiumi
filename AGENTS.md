@@ -38,3 +38,9 @@ Keep entry points and community guides bilingual. Maintain separate English and 
 ## Submitting changes
 
 Follow the [contribution workflow](docs/CONTRIBUTING.md#commits-and-pull-request-titles) for every commit, issue and pull request. Use English `type(scope): summary` commit and PR titles, report actual verification results, and squash-merge each reviewed PR using its title.
+
+## Client identity
+
+Use Jiumi as the default client name for the application bundle, system display name, permission requests, login item and settings window. Keep the pet name in character data and its label. Override the client name only when the user explicitly requests a client name.
+
+Use the [client authoring guide](skill/jiumi-pet/references/desktop-client.md) for language, icon, native controls and plugin defaults. Keep its Chinese edition and the official distribution aligned with the host contract.
