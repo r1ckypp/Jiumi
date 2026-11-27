@@ -11,6 +11,10 @@ description: 使用预设或自带 PNG 在本机制作桌宠，离线预览、�
 
 运行 `python3 pet.py create "名字" --language zh-CN --output "交付目录"`。提供 HTML 预览和对应平台的桌面应用。macOS 双击应用后可从菜单栏图标管理。Windows 可用 `python` 运行命令，交付时保留完整的 `Jiumi-Windows` 目录，双击其中的 `Jiumi.exe`，从通知区域图标管理显隐、重置位置和退出。明确只要 HTML 时加 `--html-only`。已有用户原画用 `--image` 保留。
 
+桌面版优先用项目模板在用户机器上构建。macOS 和 Windows 均先运行上述创建命令；如果返回 `desktop_error`，保留已生成的角色和预览。修复本机可处理的问题后，用 `python3 pet.py desktop-app 角色UUID "交付目录"` 重试，沿用原角色。
+
+如果本机缺少必要工具、目标平台没有可用模板，或构建仍然失败，向用户说明具体原因。检查[官方 GitHub Releases](https://github.com/r1ckypp/Jiumi/releases)，有匹配系统和处理器架构的预构建客户端时，提示用户下载对应附件。下载后，按该版本支持的方式在本机载入用用户素材制作的角色包，并打开客户端核对角色和互动。若找不到兼容附件或该版本不支持载入角色包，说明桌面版尚未完成，交付已有角色文件和可用的 HTML 预览。
+
 创建时按用户提出制作请求所用的语言传入 `--language`：中文用 `zh-CN`，英文用 `en`。用户明确指定界面语言时优先遵从。不要根据角色名字或 Skill 的语言推断。用户之后可在「设置 → 应用与系统 → 界面语言」切换。
 
 

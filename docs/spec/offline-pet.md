@@ -4,6 +4,8 @@
 
 A finished pet opens, reacts to touch and runs its installed motions and plugins offline. A standalone HTML file embeds the player, artwork and selected modules. The desktop edition shares the package and feedback semantics and bundles its host. The user needs a browser or the target OS. Compilation happens on the build machine. Image generation is optional during creation. Core playback requires only a browser or the bundled native host.
 
+For desktop delivery, prefer building the project template on the creator's machine. When local compilation is unavailable, a compatible prebuilt host from the [official releases](https://github.com/r1ckypp/Jiumi/releases) can serve as a fallback if its version supports loading the creator's character package locally. Both routes preserve the same artwork and pet identity. Verify desktop delivery by opening the assembled character in the target host.
+
 The Skill includes a maker for single PNGs, color adjustments, motion previews and export. Developers can launch a macOS or Windows window from the CLI or build a standalone application in advance. JSON feedback rules and compiled modules extend the same pet. See the [event specification](event-feedback.md).
 
 ## 1. Create motion assets in the Skill and play them in the host

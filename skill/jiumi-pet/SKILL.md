@@ -9,6 +9,10 @@ Use the user's description to deliver a ready-to-play character. Default to the 
 
 Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Deliver the HTML preview and the matching desktop build on macOS or Windows. On Windows, run with `python` if `python3` is unavailable, keep the complete `Jiumi-Windows` folder together, and launch `Jiumi.exe`. The notification-area icon controls visibility, position reset and quit. On macOS, double-click the app and manage it from the Jiumi menu-bar icon. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
 
+For desktop delivery, try the project template on the user's machine first. On macOS and Windows, run the creation command above. If it returns `desktop_error`, keep the generated pet and preview. After resolving a local build issue, retry with `python3 pet.py desktop-app PET_ID "DIRECTORY"` using the existing pet ID.
+
+If required tools are unavailable, the target has no supported template, or the build still fails, explain the specific blocker. Check the [official GitHub Releases](https://github.com/r1ckypp/Jiumi/releases) for a prebuilt client matching the user's OS and processor architecture and direct them to the matching asset. After download, load the character package made from the user's artwork locally using that release's documented procedure. Open the client and verify the character and its interactions. If a compatible asset or loading procedure is unavailable, report that desktop delivery is incomplete and provide the existing character files and any working HTML preview.
+
 Pass `--language` to match the language of the creation request: `en` for English or `zh-CN` for Chinese. Honor an explicitly requested interface language first. Determine this from the request itself, independently of the pet name or the language of this guide. The user can change it later in Settings → App & System → Interface language.
 
 
