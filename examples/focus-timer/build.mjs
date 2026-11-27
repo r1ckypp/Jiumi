@@ -9,7 +9,7 @@ const root=fileURLToPath(new URL('../../',import.meta.url));
 const tmp=mkdtempSync(join(tmpdir(),'jiumi-module-'));
 try{
   const wasm=join(tmp,'timer.wasm');
-  execFileSync(join(root,'node_modules/.bin/asc'),[join(root,'examples/focus-timer/index.ts'),'--runtime','stub','-O','--noExportMemory','--maximumMemory','1','-o',wasm]);
+  execFileSync(process.execPath,[join(root,'node_modules/assemblyscript/bin/asc.js'),join(root,'examples/focus-timer/index.ts'),'--runtime','stub','-O','--noExportMemory','--maximumMemory','1','-o',wasm]);
   const bytes=readFileSync(wasm);
   const manifest={
     id:'focus-timer',name:'专注计时',api:1,version:1,
