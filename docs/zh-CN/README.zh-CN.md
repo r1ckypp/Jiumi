@@ -98,4 +98,4 @@ macOS 是首轮验收平台。Windows 和 Linux 目前可打开导出的 HTML，
 
 ## 许可证
 
-啾咪开放核心及其文档采用 MIT 许可证。官方角色原画单独维护。使用第三方素材或插件时，请查阅它们随附的授权条款。[MIT 正式条款](../../LICENSE) · [中文参考译文](LICENSE.zh-CN.md)
+啾咪开放核心及其文档采用 MIT 许可证。官方角色原画单独维护。发行包附带官网小鸡原画 `skill/jiumi-pet/animals/chick.png`，核心的 MIT 许可不涵盖这张原画。使用第三方素材或插件时，请查阅它们随附的授权条款。[MIT 正式条款](../../LICENSE) · [中文参考译文](LICENSE.zh-CN.md)

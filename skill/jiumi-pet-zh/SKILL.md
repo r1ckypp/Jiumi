@@ -24,4 +24,4 @@ description: 在本机创建或修改 Jiumi 桌宠。适用于从描述或 PNG �
 - 若本机没有 Python，可直接打开安装包里的 `maker.html`，在页面中选定请求所用的界面语言，再导入 PNG、导出角色 JSON 和 HTML。编辑已有角色时使用它的制作页面。手头只有角色 JSON 时保留原包，交给支持导入的工具继续。
 - 若本机仍无法构建目标客户端，说明具体原因，到[官方 GitHub Releases](https://github.com/r1ckypp/Jiumi/releases) 核对系统、架构及该版本载入本地角色包的方式。有兼容附件时提示用户下载，再结合用户素材在本机组装并打开验证。无法核实兼容版本、载入方式或运行结果时，交付已有角色与可用预览，明确桌面部分尚待完成或验证。
 
-普通角色使用预对齐部件。涉及关节联动、自定义分件或独立动作帧时，查[进阶动作制作](references/articulation.md)。制作桌面客户端、互动插件或调整设置时，查[桌面客户端规范](references/desktop-client.md)。
+默认小鸡使用随包附带的官网原画。需要分件动作时使用预对齐部件。涉及关节联动、自定义分件或独立动作帧时，查[进阶动作制作](references/articulation.md)。制作桌面客户端、互动插件或调整设置时，查[桌面客户端规范](references/desktop-client.md)。

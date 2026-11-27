@@ -88,6 +88,8 @@ def read(pid):
 
 def create(name,color=None,image=None,animal=None,modules=None,character=None,layers=None,language="zh-CN"):
     rig=None
+    if not image and (animal or "chick") == "chick" and not (character or layers or color):
+        image = ROOT/"animals/chick.png"
     if not image:
         rig={"kind":"humanoid","style":character,"poses":json.loads((ROOT/"runtime/knight-poses.json").read_text(encoding="utf-8"))} if character in ("knight","humanoid") else {"kind":"sugar","species":animal or "chick"}
     color=color or ("#4d8792" if character in ("knight","humanoid") else SUGAR_COLORS.get(animal or "chick","#fac763"))

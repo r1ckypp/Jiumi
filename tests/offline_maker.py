@@ -16,6 +16,10 @@ with tempfile.TemporaryDirectory() as tmp, sync_playwright() as pw:
     page.goto(maker.as_uri())
     assert page.locator("html").get_attribute("lang") == "en"
     page.select_option("#language", "zh-CN")
+    import base64
+    starter = Path(__file__).resolve().parents[1] / "skill/jiumi-pet/animals/chick.png"
+    portrait = "data:image/png;base64," + base64.b64encode(starter.read_bytes()).decode()
+    page.wait_for_function("src => document.querySelector('#stage img')?.currentSrc === src", arg=portrait)
     page.select_option("#preset", "pig")
     page.fill("#pet-name", "泡泡<蓝>")
     page.select_option("#language", "en")

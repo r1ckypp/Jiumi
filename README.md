@@ -98,4 +98,4 @@ Mark a capability verified after exercising it in the named client on the named 
 
 ## License
 
-Jiumi's open core and its documentation are distributed under the MIT License. Official character artwork is maintained separately. For third-party art or plugins, check the terms supplied with those files. [MIT License](LICENSE)
+Jiumi's open core and its documentation are distributed under the MIT License. Official character artwork is maintained separately. The distribution includes a copy of the official starter portrait in `skill/jiumi-pet/animals/chick.png`; the core MIT license does not cover this artwork. For third-party art or plugins, check the terms supplied with those files. [MIT License](LICENSE)

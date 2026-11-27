@@ -18,12 +18,18 @@ source=root/"skill/jiumi-pet"
 sys.path.insert(0, str(source))
 from preview_page import render_preview
 
+assets = args.official_assets or source / "animals"
+starter = source / "animals/chick.png"
+if args.official_assets and (assets / "chick.png").read_bytes() != starter.read_bytes():
+    raise ValueError("Update the bundled starter chick to match the official artwork")
 presets = {}
 if args.official_assets:
     names = {"chick":"方糖小鸡","pig":"蓝色小猪","bunny":"兔子","cat":"猫","cow":"奶牛","elephant":"大象"}
     for animal, label in names.items():
         image = (args.official_assets / (animal + ".png")).read_bytes()
         presets[animal] = {"label":label, "image":"data:image/png;base64," + base64.b64encode(image).decode()}
+else:
+    presets["chick"] = {"label":"方糖小鸡", "image":"data:image/png;base64," + base64.b64encode(starter.read_bytes()).decode()}
 maker = args.output / "maker.html"
 maker.write_text(render_preview(presets=presets))
 
@@ -63,9 +69,8 @@ def build_skill(skill_name):
                                        ("host-capabilities.md", "host-capabilities.md")]:
             spec = (root / "docs/spec" / original).read_text().replace("](plugin-sdk.md)", "](STATE-MACHINES.md)")
             package.writestr(f"{skill_name}/{packaged}", spec)
-        if args.official_assets:
-            for image in sorted(args.official_assets.glob("*.png")):
-                package.write(image, f"{skill_name}/animals/{image.name}")
+        for image in sorted(assets.glob("*.png")):
+            package.write(image, f"{skill_name}/animals/{image.name}")
     return archive
 
 

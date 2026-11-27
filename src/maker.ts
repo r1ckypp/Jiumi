@@ -30,19 +30,19 @@ function bluePig(blinking=false): string {
 }
 
 function makerPresets(official: Presets): Presets {
-  return Object.keys(official).length ? official : {
-    chick: {label:'方糖小鸡',image:''}, cat: {label:'方糖猫', image:''}, pig: {label:'蓝色小猪', image:bluePig()}
+  return official.pig ? official : {
+    chick: official.chick ?? {label:'方糖小鸡',image:''}, cat: {label:'方糖猫', image:''}, pig: {label:'蓝色小猪', image:bluePig()}
   };
 }
 
-function sugarPreset(species:string): Pick<PetPackage,'rig'|'color'> {
+function sugarPreset(species:string, image:string): Pick<PetPackage,'rig'|'color'> {
   const colors:Record<string,string>={chick:'#fac763',pig:'#99d3ec',cat:'#edb278',cow:'#f4ecdc',bunny:'#ecd6d5',elephant:'#adbbd8'};
-  return {rig:{kind:'sugar',species},color:colors[species]??colors.chick};
+  return {rig:species==='chick' && image ? undefined : {kind:'sugar',species},color:colors[species]??colors.chick};
 }
 
 declare const defaultSpeech:SpeechModule;
 function newPet(presets: Presets): PetPackage {
-  return {id:crypto.randomUUID(), name:ui('啾咪'), ...sugarPreset(Object.keys(presets)[0]), image:Object.values(presets)[0].image, modules:[structuredClone(defaultSpeech)], plugins:[defaultSpeech.id], revision:0};
+  return {id:crypto.randomUUID(), name:ui('啾咪'), ...sugarPreset('chick',presets.chick.image), image:presets.chick.image, modules:[structuredClone(defaultSpeech)], plugins:[defaultSpeech.id], revision:0};
 }
 
 function setupMaker(presets: Presets, pet: PetPackage, update: (value: Partial<PetPackage>) => void) {
@@ -70,7 +70,7 @@ function setupMaker(presets: Presets, pet: PetPackage, update: (value: Partial<P
     ++request;
     upload.value = '';
     notice.textContent = '';
-    update({...sugarPreset(select.value),image:presets[select.value].image, appearance:{}});
+    update({...sugarPreset(select.value,presets[select.value].image),image:presets[select.value].image, appearance:{}});
   };
   upload.onchange = async () => {
     const file = upload.files?.[0];
