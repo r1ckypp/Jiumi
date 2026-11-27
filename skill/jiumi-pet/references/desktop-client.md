@@ -2,6 +2,16 @@
 
 Build with the bundled pet.py and shared player. Keep the existing UUID when editing a character. Use Jiumi.app and the sugar-cube chick application and menu-bar icon across characters. Only an explicit client-name request overrides Jiumi. Pass the language of the creation request with --language en or --language zh-CN. Explicit language requests take priority. The saved device preference wins on subsequent launches.
 
+## Windows desktop host
+
+On Windows, run `python pet.py desktop-app UUID OUTPUT_DIRECTORY` to publish an existing pet or `python pet.py open UUID` to test it locally. The build machine needs the .NET 9 SDK. The client bundles .NET and uses the installed Microsoft Edge WebView2 Runtime. Keep the complete output folder alongside `Jiumi.exe`. The host reuses the offline player and keeps its window position per pet UUID in Local AppData.
+
+The notification-area icon and pet context menu both open the same searchable Windows settings window. It provides Appearance, Pet Window, Input & Permissions, Shortcuts, Plugins & Interactions, App & System, and About. Device preferences are stored by pet UUID. Plugin enablement applies to the live player and travels with an exported character. Interaction labels, order and visibility stay on the device.
+
+Windows uses the foreground window on the pet's screen to detect full-screen apps. A manually hidden pet stays hidden when the foreground changes. Settings remain available from the notification area while click-through is enabled. The visibility shortcut uses Windows global hotkey registration. The packaged executable can opt into per-user login startup. Cross-app typing works only with an enabled typing plugin and an explicit user setting, and sends timing without key values or text.
+
+Verify offline launch, tap and drag, both menus and search. Change size, language and idle timing, disable and reopen a plugin, re-order and reset interaction commands, and export the current character. Check click-through recovery, shortcut conflicts, full-screen transitions, position recovery, and the login item on a Windows test account.
+
 ## Settings and menus
 
 Keep show/hide, Settings and Quit in both native menus. Visible plugin actions are available directly on right-click and grouped under Interactions in the menu bar. Put position recovery and click-through under Pet Window, typing permissions under Input & Permissions, export under About, and language under App & System. Appearance controls theme, pet size, opacity, name and idle timing. Keep the visibility shortcut and login setting in their existing pages.

@@ -44,7 +44,10 @@ def build_skill(skill_name):
         package.writestr(f"{skill_name}/SKILL.md", guide)
         for path in sorted(references.glob("*.md")):
             package.write(path, f"{skill_name}/references/{path.name}")
-        for path in sorted([*source.glob("*.py"), *(source / "runtime").glob("*")]):
+        runtime = source / "runtime"
+        windows = runtime / "windows"
+        for path in sorted([*source.glob("*.py"), *(p for p in runtime.iterdir() if p.is_file()),
+                            *windows.glob("*.cs"), *windows.glob("*.csproj"), *windows.glob("*.ico")]):
             package.write(path, f"{skill_name}/{path.relative_to(source)}")
         for path in [root / "examples/modules/focus-timer.json", source / "runtime/pickup.json", root / "examples/modules/typing.json",
                      root / "examples/modules/feed.json", root / "examples/modules/agent-confirm.json", root / "examples/plugins/tap-confetti.json"]:

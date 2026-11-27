@@ -267,7 +267,8 @@ function petHands(button,feedback){
   const hand=document.createElement('span');
   hand.className='jiumi-hand';hand.setAttribute('aria-hidden','true');hand.hidden=true;button.append(hand);
   button.dataset.petTouch='idle';
-  const bridge=window.webkit?.messageHandlers?.petGrab;
+  const bridge=window.webkit?.messageHandlers?.petGrab ??
+    (window.chrome?.webview ? {postMessage: action => window.chrome.webview.postMessage('jiumi:grab:'+action)} : undefined);
   const listeners=new AbortController();
   let pointer=null,holdTimer,handTimer,held=false,skipClick=false,startX,startY,offsetX=0,offsetY=0;
   function on(target,event,fn){target.addEventListener(event,fn,{signal:listeners.signal});}
@@ -338,7 +339,7 @@ function attachPetMenu(stage,pet,nativeMenu){
     if(!feedback.menuItems.some(item=>item.event===event))return false;
     return feedback.dispatch({v:1,id:crypto.randomUUID(),source:'menu',type:event,at:Date.now()});
   };
-  if(nativeMenu || !items.length)return;
+  if(nativeMenu || window.jiumiWindowsHost || !items.length)return;
   const select=document.createElement('select');
   select.setAttribute('aria-label',ui('互动'));
   select.add(new Option(ui('互动'),''));
@@ -435,7 +436,7 @@ function mountPet(button, pet, catalog, host) {
     };
   }
   if ((pet.modules??[]).some(m => m.kind==='state-machine' && Object.hasOwn(m.enter,'typing.stroke')))
-    attachTypingInput(motion,pet,host?.nativeMenu);
+    attachTypingInput(motion,pet,host?.nativeMenu || window.jiumiWindowsHost);
   button.feedback=motion;
   if(document.hidden)motion.setVisible(false);
   let count=0;

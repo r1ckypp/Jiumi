@@ -9,7 +9,7 @@ description: 使用预设或自带 PNG 在本机制作桌宠，离线预览、�
 
 解压中文版 Skill 包后，在其目录运行下列命令。若从源码使用，请在仓库根目录运行 `python3 integrations/local/build.py`，解压 `dist/jiumi-pet-zh-skill.zip` 后进入 `jiumi-pet-zh/`。
 
-运行 `python3 pet.py create "名字" --language zh-CN --output "交付目录"`。提供 HTML 预览，macOS 同时提供对应应用；提示双击应用启动悬浮桌宠，从菜单栏小鸡图标管理显隐和设置。明确只要 HTML 时加 `--html-only`。已有用户原画用 `--image` 保留。
+运行 `python3 pet.py create "名字" --language zh-CN --output "交付目录"`。提供 HTML 预览和对应平台的桌面应用。macOS 双击应用后可从菜单栏图标管理。Windows 可用 `python` 运行命令，交付时保留完整的 `Jiumi-Windows` 目录，双击其中的 `Jiumi.exe`，从通知区域图标管理显隐、重置位置和退出。明确只要 HTML 时加 `--html-only`。已有用户原画用 `--image` 保留。
 
 创建时按用户提出制作请求所用的语言传入 `--language`：中文用 `zh-CN`，英文用 `en`。用户明确指定界面语言时优先遵从。不要根据角色名字或 Skill 的语言推断。用户之后可在「设置 → 应用与系统 → 界面语言」切换。
 

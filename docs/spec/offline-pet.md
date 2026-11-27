@@ -4,7 +4,7 @@
 
 A finished pet opens, reacts to touch and runs its installed motions and plugins offline. A standalone HTML file embeds the player, artwork and selected modules. The desktop edition shares the package and feedback semantics and bundles its host. The user needs a browser or the target OS. Compilation happens on the build machine. Image generation is optional during creation. Core playback requires only a browser or the bundled native host.
 
-The Skill includes a maker for single PNGs, color adjustments, motion previews and export. Developers can launch a macOS window from the CLI or build a standalone application in advance. JSON feedback rules and compiled modules extend the same pet. See the [event specification](event-feedback.md).
+The Skill includes a maker for single PNGs, color adjustments, motion previews and export. Developers can launch a macOS or Windows window from the CLI or build a standalone application in advance. JSON feedback rules and compiled modules extend the same pet. See the [event specification](event-feedback.md).
 
 ## 1. Create motion assets in the Skill and play them in the host
 
@@ -55,7 +55,7 @@ The desktop host can persist progress automatically. Browser storage for local f
 | Local SDK, isolated execution, persistence and host | A timer can be installed, disabled and enabled. It settles once after wake. A plugin failure leaves the pet interactive. Browser HTML and a bundled macOS app run offline. | [SDK v1](plugin-sdk.md), `tests/offline_modules.py`, `tests/desktop_bundle.py` |
 | Local event adapters | An opted-in hook drives the installed reaction. Disconnecting or disabling it stops delivery. | `tests/event_bridge.py` |
 
-The current release accepts PNG sequences and one safe integer per plugin. macOS supports a native app for the build machine's architecture. Windows and Linux use standalone HTML. Automatic sprite slicing, network capabilities, and app-store distribution are future work.
+The current release accepts PNG sequences and one safe integer per plugin. macOS supports a native app for the build machine's architecture. Windows has a native WebView2 host in the Skill source. It uses the same offline player and provides a floating window, notification-area management, and seven searchable settings pages. Window preferences, hotkeys, startup registration, and opt-in keyboard timing are device-local. Linux uses standalone HTML. Automatic sprite slicing, network capabilities, and app-store distribution are future work.
 
 ### Animation libraries
 

@@ -7,7 +7,7 @@ description: Create a desktop pet locally from a preset or your PNG. Preview, pe
 
 Use the user's description to deliver a ready-to-play character. Default to the sugar-cube chick; for a named animal use its preset (e.g. `--animal pig`). Set `--color` only when requested. Ordinary creations use pre-aligned moving parts. Skip technical choices and joint setup.
 
-Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Deliver the HTML preview and, on macOS, the matching app. Double-click the app for the floating pet; use the Jiumi menu-bar icon to hide, show or adjust it. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
+Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Deliver the HTML preview and the matching desktop build on macOS or Windows. On Windows, run with `python` if `python3` is unavailable, keep the complete `Jiumi-Windows` folder together, and launch `Jiumi.exe`. The notification-area icon controls visibility, position reset and quit. On macOS, double-click the app and manage it from the Jiumi menu-bar icon. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
 
 Pass `--language` to match the language of the creation request: `en` for English or `zh-CN` for Chinese. Honor an explicitly requested interface language first. Determine this from the request itself, independently of the pet name or the language of this guide. The user can change it later in Settings → App & System → Interface language.
 

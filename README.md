@@ -23,7 +23,7 @@ Jiumi provides a lightweight, modular framework you can extend. Draw the artwork
 
 - **Your artwork, your pet.** A single transparent PNG is enough to start. Add animation frames for a blink or a wave, change how your pet reacts to touch, or extend its behavior with local plugins.
 - **Bring your own agent.** An assistant that can read the Skill and run local scripts can follow the creation workflow. See the [support matrix](#desktop-agent-support-matrix) for app-specific integrations.
-- **One pet across platforms.** Open the HTML edition in a browser on macOS, Windows, or Linux. On macOS, you can also run it as a floating desktop companion. Native support for more platforms and a mobile experience for Android and iOS are on the roadmap.
+- **One pet across platforms.** Open the HTML edition in a browser on macOS, Windows, or Linux. macOS and Windows can also run it as a floating desktop companion. Linux native support and a mobile experience for Android and iOS are on the roadmap.
 
 ## Use the local pet maker
 
@@ -57,7 +57,7 @@ Try the bundled focus timer. Expand the local plugins section in the maker and i
 
 ### Available today
 
-- **Create and keep a pet locally.** Describe a character to an agent or open the bilingual maker with your own PNG. Export a playable HTML file and an editable package that preserves the pet’s ID, artwork and plugin choices. On macOS, the Skill can also build a floating app with menu bar controls. [Local runtime](docs/spec/offline-pet.md)
+- **Create and keep a pet locally.** Describe a character to an agent or open the bilingual maker with your own PNG. Export a playable HTML file and an editable package that preserves the pet’s ID, artwork and plugin choices. The Skill can build a floating app with menu bar controls on macOS or notification-area controls on Windows. Both desktop hosts provide searchable settings. [Local runtime](docs/spec/offline-pet.md)
 - **Reuse the same interactions across characters.** Sugar-cube pets use pre-aligned parts, while articulated humanoids use a skeleton. A PNG sequence can override a single motion. Both renderers use the same pickup and landing plugin. [Character rendering](docs/spec/character-rendering.md) · [Plugin SDK](docs/spec/plugin-sdk.md)
 - **Add interactions to the pet menu.** Import the [feed plugin](examples/modules/feed.json) and add an `eat` clip to each character. Select the command in the HTML player or the macOS pet menu.
 - **Respond to tools through local plugins.** Plugins can define when a pet enters, leaves or resumes a state. An opt-in Claude Code CLI hook on macOS can trigger a confirmation notice that stays visible while the pet is dragged. Clicking it can reopen the session when the host has a local binding. [Events](docs/spec/event-feedback.md) · [Host capabilities](docs/spec/host-capabilities.md)
@@ -66,7 +66,7 @@ Try the bundled focus timer. Expand the local plugins section in the maker and i
 
 - **Desktop agent plugins are the first priority.** Start with ChatGPT desktop on macOS: install the plugin, create a pet in a fresh session, open its preview and uninstall. Then target Doubao Work, WorkBuddy and QwenWork. Where the client exposes session events, verify the confirmation notice and return to the originating session.
 - **Sprite-sheet import.** Slice a single sheet into ordered frames for the existing motion editor. Today it accepts individual PNG frames. [Motion assets](docs/spec/offline-pet.md)
-- **More platforms.** Extend native floating pets to Windows and Linux, where the standalone HTML edition works today. Android and iOS are longer-term goals. Mobile interaction and distribution are still open design questions. [Current platform support](docs/spec/offline-pet.md)
+- **More platforms.** Validate the baseline Windows host and extend native floating pets to Linux, where the standalone HTML edition works today. Android and iOS are longer-term goals. Mobile interaction and distribution are still open design questions. [Current platform support](docs/spec/offline-pet.md)
 
 ### Under consideration
 

@@ -12,9 +12,9 @@ def player_source(kinds=("sugar","humanoid")):
         files.append("rig-player.js")
         files.extend(kind+".js" for kind in ("sugar","humanoid") if kind in kinds)
     files.append("player.js")
-    default = "const defaultPickup=" + (RUNTIME/"pickup.json").read_text() + ";"
-    default += "\nconst defaultSpeech=" + (RUNTIME/"chatter.json").read_text() + ";"
-    return "\n".join([default, *((RUNTIME / file).read_text() for file in files)])
+    default = "const defaultPickup=" + (RUNTIME/"pickup.json").read_text(encoding="utf-8") + ";"
+    default += "\nconst defaultSpeech=" + (RUNTIME/"chatter.json").read_text(encoding="utf-8") + ";"
+    return "\n".join([default, *((RUNTIME / file).read_text(encoding="utf-8") for file in files)])
 
 
 def render_preview(pet=None, rules=(), draft=None, presets=None):
@@ -23,10 +23,10 @@ def render_preview(pet=None, rules=(), draft=None, presets=None):
 
     parts = {
         "PLAYER": player_source([pet["rig"]["kind"]] if pet and pet.get("rig") else ([] if pet else ["sugar"])),
-        "MAKER": (RUNTIME / "maker.js").read_text(),
+        "MAKER": (RUNTIME / "maker.js").read_text(encoding="utf-8"),
         "PACKAGE": script_data([pet, rules]),
         "DRAFT": script_data(draft or {}),
         "PRESETS": script_data(presets or {}),
     }
     return re.sub(r"/\*(PLAYER|MAKER|PACKAGE|DRAFT|PRESETS)\*/",
-                  lambda match: parts[match[1]], (RUNTIME / "designer.html").read_text())
+                  lambda match: parts[match[1]], (RUNTIME / "designer.html").read_text(encoding="utf-8"))

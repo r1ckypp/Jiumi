@@ -31,13 +31,19 @@ Apply the same capability negotiation to sound and notifications. Exclusive perf
 
 ## macOS desktop host v1
 
-Every native build uses the same AppKit host. The pet context menu starts with enabled plugin actions. Both menus offer show/hide, settings and quit. The menu-bar item groups visible plugin actions under Interactions. Keep configuration, window recovery and export in settings. Both menus route to the same handlers. Hiding explicitly suspends player feedback. Reopening the app shows the existing panel.
+Every macOS native build uses the same AppKit host. The pet context menu starts with enabled plugin actions. Both menus offer show/hide, settings and quit. The menu-bar item groups visible plugin actions under Interactions. Keep configuration, window recovery and export in settings. Both menus route to the same handlers. Hiding explicitly suspends player feedback. Reopening the app shows the existing panel.
 
 Window size, floating level, opacity, name visibility, remembered position and the optional global visibility shortcut belong to this device and pet identity. The shortcut starts unbound. Register a replacement with the OS before releasing the existing registration. On conflict, leave the previous binding and stored preference intact. Clearing the shortcut releases it. Screen changes constrain the window to a visible display. Resetting window position and resetting preferences are separate commands.
 
 Mouse pass-through is off by default. Settings remain accessible from the menu bar when the pet ignores mouse events. Full-screen avoidance is on by default and uses native macOS full-screen Spaces. Space transitions never issue a show command, so manually ordering out the pet also keeps it hidden on return. Both preferences are local to the pet and can be changed in desktop settings.
 
 The bundled macOS 13+ app reads and changes its own login-item registration through SMAppService. Settings report system approval or registration errors. Unbundled previews do not register. The plugin manager shows installed versions and applies enablement changes to the mounted player. Active sessions, notices and unrelated workers survive these edits. Device preferences restore individual plugin overrides before startup; exporting the character records the current enabled IDs. Interaction labels, visibility and ordering remain device preferences. Reset Menu restores the default arrangement without changing plugin enablement. Fixed host recovery commands remain available with every plugin disabled. The host suspends player feedback on workspace sleep and reconciles visibility on wake.
+
+## Windows desktop host
+
+Windows hosts the offline player in WebView2. The pet context menu and notification-area icon share the management actions and settings. Click-through modifies the pet HWND and leaves notification-area controls available. Full-screen avoidance tracks foreground coverage on the pet's monitor, independently of the user's manual visibility preference.
+
+The seven settings pages use the same player controls and persistence semantics as macOS. Windows registers a replacement global hotkey before releasing the old one. The packaged executable can register a per-user login command. A visible instance with an enabled typing plugin and user opt-in registers for keyboard transitions and sends timing to the player. Disabling the feature, hiding the pet, suspending, or closing releases the registration.
 
 ## Client identity
 
