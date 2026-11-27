@@ -6,6 +6,8 @@ Build with the bundled pet.py and shared player. Keep the existing UUID when edi
 
 On Windows, run `python pet.py desktop-app UUID OUTPUT_DIRECTORY` to publish an existing pet or `python pet.py open UUID` to test it locally. The build machine needs the .NET 9 SDK. The client bundles .NET and uses the installed Microsoft Edge WebView2 Runtime. Keep the complete output folder alongside `Jiumi.exe`. The host reuses the offline player and keeps its window position per pet UUID in Local AppData.
 
+Opening the same pet UUID again recalls its existing Windows window. Different pet UUIDs can run side by side. Use open or desktop-app with the existing UUID when reusing a pet.
+
 The notification-area icon and pet context menu both open the same searchable Windows settings window. It provides Appearance, Pet Window, Input & Permissions, Shortcuts, Plugins & Interactions, App & System, and About. Device preferences are stored by pet UUID. Plugin enablement applies to the live player and travels with an exported character. Interaction labels, order and visibility stay on the device.
 
 Windows uses the foreground window on the pet's screen to detect full-screen apps. A manually hidden pet stays hidden when the foreground changes. Settings remain available from the notification area while click-through is enabled. The visibility shortcut uses Windows global hotkey registration. The packaged executable can opt into per-user login startup. Cross-app typing works only with an enabled typing plugin and an explicit user setting, and sends timing without key values or text.

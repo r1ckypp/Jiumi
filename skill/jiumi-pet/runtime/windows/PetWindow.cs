@@ -2,6 +2,8 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
+using System.Threading;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -50,10 +52,25 @@ internal sealed partial class PetWindow : Window
             string identity = args.Length > 1 ? args[1] : File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "pet-id.txt")).Trim();
             string language = args.Length > 2 ? args[2] : File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "language.txt")).Trim();
             string name = args.Length > 3 ? args[3] : File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "client-name.txt")).Trim();
+            Guid id = Guid.Parse(identity);
+            using var user = WindowsIdentity.GetCurrent();
+            string instance = $@"Local\Jiumi.{user.User!.Value}.{id:N}";
+            // Create the recall signal first so an early second launch can still wake the first.
+            using var recall = new EventWaitHandle(false, EventResetMode.AutoReset, instance + ".Recall");
+            using var lifetime = new Mutex(false, instance, out bool firstInstance);
+            if (!firstInstance)
+            {
+                recall.Set();
+                return 0;
+            }
             if (!File.Exists(html))
                 throw new FileNotFoundException("Pet HTML was not found.", html);
             var app = new Application();
-            return app.Run(new PetWindow(html, Guid.Parse(identity), language, name));
+            var window = new PetWindow(html, id, language, name);
+            var registration = ThreadPool.RegisterWaitForSingleObject(recall, (_, _) =>
+                app.Dispatcher.BeginInvoke(window.Recall), null, Timeout.Infinite, false);
+            try { return app.Run(window); }
+            finally { registration.Unregister(null); }
         }
         catch (Exception error)
         {
@@ -248,6 +265,13 @@ internal sealed partial class PetWindow : Window
             return;
         drag.Stop();
         SavePosition();
+    }
+
+    private void Recall()
+    {
+        manuallyHidden = false;
+        if (ready)
+            UpdateVisibility();
     }
 
     private void Toggle()
