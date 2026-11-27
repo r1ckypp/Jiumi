@@ -1,35 +1,27 @@
 ---
 name: jiumi-pet
-description: Create a desktop pet locally from a preset or your PNG. Preview, pet and drag it offline, then export a standalone HTML file.
+description: Create or edit a Jiumi desktop pet locally. Use for characters made from a description or PNG, adding motions or plugins to an existing pet, or delivering an offline HTML preview or a macOS or Windows desktop client.
 ---
 
-# Create a Jiumi pet
+# Create or edit a Jiumi pet
 
-Use the user's description to deliver a ready-to-play character. Default to the sugar-cube chick; for a named animal use its preset (e.g. `--animal pig`). Set `--color` only when requested. Ordinary creations use pre-aligned moving parts. Skip technical choices and joint setup.
+Identify the character first, then choose the deliverable. Run commands from the extracted Skill directory. On Windows, use `python` if needed. From a source checkout, run `python3 integrations/local/build.py` at the repository root and extract the Skill archive for the desired language.
 
-Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Deliver the HTML preview and the matching desktop build on macOS or Windows. On Windows, run with `python` if `python3` is unavailable, keep the complete `Jiumi-Windows` folder together, and launch `Jiumi.exe`. The notification-area icon controls visibility, position reset and quit. On macOS, double-click the app and manage it from the Jiumi menu-bar icon. Use `--html-only` for an HTML-only request. Preserve supplied artwork with `--image`.
+| User request | Starting point |
+| --- | --- |
+| Create a character | Run `python3 pet.py create "NAME" --language en --output "DIRECTORY"`. Add `--image "art.png"` for supplied artwork. Default to the cream-yellow sugar-cube chick. Use the requested animal preset and pass `--color` only for a requested color. |
+| Edit a character or install a plugin | Locate its UUID with `python3 pet.py local` or import the user's character package. Inspect existing art, motions and plugin choices. Change only what was requested and retain the UUID and saved language. See [local workflows](references/workflows.md). |
+| Deliver HTML only | Add `--html-only` when creating a character, or export from its existing maker page. Creation returns a maker preview. Use “Export pet HTML” for the standalone player, then open it offline and check the artwork and interaction. |
+| Deliver a desktop client | Creation also attempts a native build on macOS and Windows by default. For an existing pet run `python3 pet.py desktop-app PET_ID "DIRECTORY"`. |
 
-For desktop delivery, try the project template on the user's machine first. On macOS and Windows, run the creation command above. If it returns `desktop_error`, keep the generated pet and preview. After resolving a local build issue, retry with `python3 pet.py desktop-app PET_ID "DIRECTORY"` using the existing pet ID.
+For a new character, pass `--language en` or `--language zh-CN` to match the request. An explicitly requested interface language takes priority. Use Jiumi for the application, permission prompts, login item and settings. Keep the character's name in its data and label. Override Jiumi only on an explicit client-name request.
 
-If required tools are unavailable, the target has no supported template, or the build still fails, explain the specific blocker. Check the [official GitHub Releases](https://github.com/r1ckypp/Jiumi/releases) for a prebuilt client matching the user's OS and processor architecture and direct them to the matching asset. After download, load the character package made from the user's artwork locally using that release's documented procedure. Open the client and verify the character and its interactions. If a compatible asset or loading procedure is unavailable, report that desktop delivery is incomplete and provide the existing character files and any working HTML preview.
+## Desktop delivery and recovery
 
-Pass `--language` to match the language of the creation request: `en` for English or `zh-CN` for Chinese. Honor an explicitly requested interface language first. Determine this from the request itself, independently of the pet name or the language of this guide. The user can change it later in Settings → App & System → Interface language.
+Try the project template on the user's machine first. Build on the target OS: the template selects the current host. A Mac produces a macOS app, and a Windows machine produces the Windows folder. Deliver the launchable app on macOS, or the complete Jiumi-Windows folder containing Jiumi.exe on Windows. Open the client and verify the user's character and requested interactions.
 
+- If creation returns `desktop_error`, keep its pet ID and working HTML preview. Resolve the reported problem where possible and retry only `desktop-app`.
+- If Python is unavailable, open the bundled `maker.html` in a browser, select the requested interface language, and import a PNG and export editable character JSON and HTML. For an existing pet, use its own maker page. If only its JSON is available, retain the package for a tool that supports importing it.
+- If the target client still cannot be built locally, explain the blocker. Check the [official GitHub Releases](https://github.com/r1ckypp/Jiumi/releases) for the OS, architecture and a documented way to load local character data. Direct the user to a compatible asset, assemble it with their artwork locally and open it to verify. If compatibility, loading or launch cannot be verified, deliver the available character files and working preview and identify the pending desktop work.
 
-Load [articulation](references/articulation.md) only when the brief needs independently articulated humanoid limbs, custom part art or a special frame performance. Infer needs from the requested actions. Ask only about a material creative choice the description leaves open.
-
-For local import, launch, plugins or event hooks, consult [local workflows](references/workflows.md) as needed.
-
-For a community installation on an existing pet, use the fixed ID and version from the detail page with remote MCP get_community_module. Inspect the existing character and preserve its motions. Pass the downloaded JSON to local install_pet_module or run `python3 pet.py install-module UUID module.json --module-id ID --version N`. Supply missing character clips through `--clips clips.json` (a map of motion IDs to frame sequences). Export and try the command offline.
-
-The macOS v1 host includes an interaction-first context menu, a management menu in the menu bar, window preferences and an optional per-pet global visibility shortcut. Keep the pet UUID when rebuilding to retain its device settings.
-
-Toggle mouse pass-through in desktop settings, accessible from the Jiumi menu-bar icon. By default the pet stays out of native full-screen Spaces and returns when leaving them unless manually hidden.
-
-In Desktop Settings, macOS 13+ app bundles can opt into Open at Login. Plugins & Interaction Menu shows installed versions, enables and disables plugins live, and edits the order, visibility and names of interaction commands. Export the character package to carry the enabled selection.
-
-## Client identity
-
-Use Jiumi as the default client name for the application bundle, system display name, permission requests, login item and settings window. Keep the pet name in character data and its label. Override the client name only when the user explicitly requests a client name.
-
-For desktop creation, interaction plugins or changes to settings and menus, follow the [desktop client standards](references/desktop-client.md).
+Use pre-aligned parts for ordinary characters. Consult [articulation](references/articulation.md) for jointed motion, custom parts or frame performances. For desktop creation, interaction plugins or settings changes, follow the [desktop client standards](references/desktop-client.md).

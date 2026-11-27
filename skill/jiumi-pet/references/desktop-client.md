@@ -14,6 +14,8 @@ Verify offline launch, tap and drag, both menus and search. Change size, languag
 
 ## Settings and menus
 
+On macOS, keep the pet out of native full-screen Spaces by default and restore it on return unless manually hidden. Keep settings accessible from the menu-bar icon during click-through. Packaged apps on macOS 13+ can enable Open at Login. Store the visibility shortcut per pet. Export the current character package to carry its enabled plugins.
+
 Keep show/hide, Settings and Quit in both native menus. Visible plugin actions are available directly on right-click and grouped under Interactions in the menu bar. Put position recovery and click-through under Pet Window, typing permissions under Input & Permissions, export under About, and language under App & System. Appearance controls theme, pet size, opacity, name and idle timing. Keep the visibility shortcut and login setting in their existing pages.
 
 Use the native searchable sidebar and installed-plugin list. Show name, version, a per-row switch and an information button. Double-clicking the name or version opens the same details without toggling the plugin. Vertically center text with the controls and preserve the trailing inset. Include disabled plugins and keep their switch state across launches.

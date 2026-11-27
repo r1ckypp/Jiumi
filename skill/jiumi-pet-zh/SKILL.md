@@ -1,37 +1,27 @@
 ---
 name: jiumi-pet-zh
-description: 使用预设或自带 PNG 在本机制作桌宠，离线预览、抚摸、拖动并导出单文件 HTML。
+description: 在本机创建或修改 Jiumi 桌宠。适用于从描述或 PNG 制作角色、为已有角色添加动作或插件，以及交付离线 HTML 试玩或 macOS、Windows 桌面客户端。
 ---
 
-# 创建啾咪桌宠
+# 制作或修改 Jiumi 桌宠
 
-按用户的角色描述直接制作。没有特别说明就生成奶油黄方糖小鸡；指定动物时使用对应预设，例如蓝色小猪用 `--animal pig`。只有用户指定配色时才传 `--color`。常规角色自动套用预对齐的活动部件，直接交付，无需用户选型或调关节。
+先确定要操作的角色，再选择交付形式。从解压后的 Skill 目录运行命令；Windows 可将 `python3` 换成 `python`。从源码使用时，先在仓库根目录运行 `python3 integrations/local/build.py`，再解压对应语言的 Skill 包。
 
-解压中文版 Skill 包后，在其目录运行下列命令。若从源码使用，请在仓库根目录运行 `python3 integrations/local/build.py`，解压 `dist/jiumi-pet-zh-skill.zip` 后进入 `jiumi-pet-zh/`。
+| 用户要做什么 | 从哪里开始 |
+| --- | --- |
+| 新建角色 | 用 `python3 pet.py create "角色名" --language zh-CN --output "交付目录"`。用户给了原画就加 `--image "原画.png"`；未指定形象时用奶油黄方糖小鸡。指定动物用对应预设，明确指定配色时才传 `--color`。 |
+| 修改已有角色或安装插件 | 用 `python3 pet.py local` 找到已有 UUID，或导入用户指定的角色包。检查当前素材、动作和插件启停选择，只改用户要求的部分。沿用 UUID 和已保存的语言。见[本地操作指南](references/workflows.md)。 |
+| 只要 HTML 试玩 | 新建时加 `--html-only`；已有角色从制作器导出。创建命令返回制作预览页；用「生成桌宠 HTML」导出独立播放器，离线打开核对原画和互动。 |
+| 交付桌面客户端 | 新建命令在 macOS 和 Windows 上默认还会尝试构建客户端。已有角色用 `python3 pet.py desktop-app 角色UUID "交付目录"`。 |
 
-运行 `python3 pet.py create "名字" --language zh-CN --output "交付目录"`。提供 HTML 预览和对应平台的桌面应用。macOS 双击应用后可从菜单栏图标管理。Windows 可用 `python` 运行命令，交付时保留完整的 `Jiumi-Windows` 目录，双击其中的 `Jiumi.exe`，从通知区域图标管理显隐、重置位置和退出。明确只要 HTML 时加 `--html-only`。已有用户原画用 `--image` 保留。
+新建时按制作请求的语言传 `--language zh-CN` 或 `--language en`，明确指定的界面语言优先。客户端在应用名、系统权限、登录项和设置中统一叫 Jiumi。角色名只用于角色。只有用户明确给客户端命名时才覆盖 Jiumi。
 
-桌面版优先用项目模板在用户机器上构建。macOS 和 Windows 均先运行上述创建命令；如果返回 `desktop_error`，保留已生成的角色和预览。修复本机可处理的问题后，用 `python3 pet.py desktop-app 角色UUID "交付目录"` 重试，沿用原角色。
+## 桌面交付与回退
 
-如果本机缺少必要工具、目标平台没有可用模板，或构建仍然失败，向用户说明具体原因。检查[官方 GitHub Releases](https://github.com/r1ckypp/Jiumi/releases)，有匹配系统和处理器架构的预构建客户端时，提示用户下载对应附件。下载后，按该版本支持的方式在本机载入用用户素材制作的角色包，并打开客户端核对角色和互动。若找不到兼容附件或该版本不支持载入角色包，说明桌面版尚未完成，交付已有角色文件和可用的 HTML 预览。
+优先用项目模板在用户机器上构建。先核对目标平台与构建机。模板按当前系统选择宿主，Mac 生成 macOS 应用，Windows 电脑生成 Windows 目录。Mac 交付可打开的应用；Windows 交付含 Jiumi.exe 的完整 Jiumi-Windows 目录。打开对应客户端，检查是用户的角色、所需互动可用。
 
-创建时按用户提出制作请求所用的语言传入 `--language`：中文用 `zh-CN`，英文用 `en`。用户明确指定界面语言时优先遵从。不要根据角色名字或 Skill 的语言推断。用户之后可在「设置 → 应用与系统 → 界面语言」切换。
+- 若创建命令返回 `desktop_error`，已生成的角色和 HTML 仍然可用。保留返回的 UUID 和预览，修复具体问题后只重试 `desktop-app`。
+- 若本机没有 Python，可直接打开安装包里的 `maker.html`，在页面中选定请求所用的界面语言，再导入 PNG、导出角色 JSON 和 HTML。编辑已有角色时使用它的制作页面。手头只有角色 JSON 时保留原包，交给支持导入的工具继续。
+- 若本机仍无法构建目标客户端，说明具体原因，到[官方 GitHub Releases](https://github.com/r1ckypp/Jiumi/releases) 核对系统、架构及该版本载入本地角色包的方式。有兼容附件时提示用户下载，再结合用户素材在本机组装并打开验证。无法核实兼容版本、载入方式或运行结果时，交付已有角色与可用预览，明确桌面部分尚待完成或验证。
 
-
-当动作需要人形关节联动、特定部件素材或独立表演片段时，才读取[进阶动作制作](references/articulation.md)。由 Agent 根据动作推断制作方式，只有影响成品的创作取舍确实不清楚时再询问。
-
-需要本机导入、启动桌宠、安装插件或监听事件时，按需读取[本地操作指南](references/workflows.md)。
-
-从社区安装到已有桌宠时，通过远程 MCP 的 get_community_module 获取详情页指定 ID 和版本。检查原角色并沿用已有动作，将完整 JSON 交给本地 install_pet_module，或运行 `python3 pet.py install-module UUID module.json --module-id ID --version N`。缺少角色动作时用 `--clips clips.json` 提供动作名到帧序列的映射，导出后从菜单离线试玩。
-
-macOS v1 宿主统一提供右键互动、菜单栏管理、窗口偏好和可录入的全局显隐快捷键。重建原角色时保留 UUID，以沿用设备上的设置。
-
-在「桌宠设置 → 桌宠窗口」中开关鼠标穿透。开启后仍可从菜单栏小鸡图标进入设置。默认避开 macOS 原生全屏空间，退出全屏后恢复；手动隐藏会一直保持到主动召回。
-
-「桌宠设置」支持登录时启动（macOS 13 及以上的独立应用）。「插件与互动菜单」可查看版本、即时启停插件，以及调整互动菜单项的名字、顺序和显隐。导出角色包可带走当前启用选择。
-
-## 客户端名称
-
-客户端默认命名为 Jiumi。应用包名、系统显示名称、权限提示、登录项和设置窗口均使用此名称。角色名称只用于角色资料和桌宠标签。只有用户明确指定客户端名称时才使用其他名称。
-
-制作桌面客户端、添加互动插件或调整设置与菜单时，遵循[桌面客户端规范](references/desktop-client.md)。
+普通角色使用预对齐部件。涉及关节联动、自定义分件或独立动作帧时，查[进阶动作制作](references/articulation.md)。制作桌面客户端、互动插件或调整设置时，查[桌面客户端规范](references/desktop-client.md)。
